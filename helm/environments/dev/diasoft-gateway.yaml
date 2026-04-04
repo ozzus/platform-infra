@@ -14,7 +14,7 @@ replayer:
   image:
     tag: dev
 env:
-  HTTP_ALLOWED_ORIGINS: https://web.dev.example.com,http://localhost:5173
+  HTTP_ALLOWED_ORIGINS: "*"
   HTTP_TRUSTED_PROXIES: 10.0.0.0/8,127.0.0.1/32
   KAFKA_SASL_ENABLED: "true"
   KAFKA_SASL_MECHANISM: SCRAM-SHA-512

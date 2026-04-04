@@ -14,7 +14,7 @@ env:
   OBJECT_STORAGE_BUCKET: team2-dev-diploma-imports
   OBJECT_STORAGE_REGION: ru-central1
   OIDC_ISSUER_URI: https://auth.dev.edu-proof.ru/realms/diasoft-team2
-  APP_ALLOWED_ORIGINS: https://web.dev.edu-proof.ru
+  APP_ALLOWED_ORIGINS: "*"
   KAFKA_SECURITY_PROTOCOL: PLAINTEXT
   OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
 

@@ -9,7 +9,7 @@ gateway:
         enabled: true
         secretName: verify-dev-tls
   env:
-    HTTP_ALLOWED_ORIGINS: https://web.dev.example.com,http://localhost:5173
+    HTTP_ALLOWED_ORIGINS: "*"
     HTTP_TRUSTED_PROXIES: 10.0.0.0/8,127.0.0.1/32
     OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
 registry:
@@ -23,7 +23,7 @@ registry:
       secretName: registry-dev-tls
   env:
     OIDC_ISSUER_URI: https://auth.dev.example.com/realms/diasoft
-    APP_ALLOWED_ORIGINS: https://web.dev.example.com,http://localhost:5173
+    APP_ALLOWED_ORIGINS: "*"
     OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
 web:
   image:

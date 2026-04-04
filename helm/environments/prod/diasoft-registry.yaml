@@ -11,7 +11,7 @@ env:
   OBJECT_STORAGE_BUCKET: diploma-imports
   OBJECT_STORAGE_REGION: ru-central1
   OIDC_ISSUER_URI: https://auth.example.com/realms/diasoft
-  APP_ALLOWED_ORIGINS: https://web.example.com
+  APP_ALLOWED_ORIGINS: "*"
   KAFKA_SECURITY_PROTOCOL: SASL_PLAINTEXT
   KAFKA_SASL_MECHANISM: SCRAM-SHA-512
   OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317

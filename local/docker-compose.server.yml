@@ -24,13 +24,13 @@ services:
 
   registry-api:
     environment:
-      APP_ALLOWED_ORIGINS: https://web.diplomverify.ru
+      APP_ALLOWED_ORIGINS: "*"
       GATEWAY_PUBLIC_BASE_URL: https://verify.diplomverify.ru
       GATEWAY_SERVICE_TOKEN: diasoft-service-token
 
   gateway-api:
     environment:
-      HTTP_ALLOWED_ORIGINS: https://web.diplomverify.ru
+      HTTP_ALLOWED_ORIGINS: "*"
       AUTH_JWT_SECRET: diasoft-team1-demo-secret
       REGISTRY_INTERNAL_BASE_URL: http://registry-api:8080
       REGISTRY_SERVICE_TOKEN: diasoft-service-token

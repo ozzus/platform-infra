@@ -9,7 +9,7 @@ gateway:
         enabled: true
         secretName: verify-stage-tls
   env:
-    HTTP_ALLOWED_ORIGINS: https://web.stage.example.com
+    HTTP_ALLOWED_ORIGINS: "*"
     OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
 registry:
   image:
@@ -22,7 +22,7 @@ registry:
       secretName: registry-stage-tls
   env:
     OIDC_ISSUER_URI: https://auth.stage.example.com/realms/diasoft
-    APP_ALLOWED_ORIGINS: https://web.stage.example.com
+    APP_ALLOWED_ORIGINS: "*"
     OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
 web:
   image:
