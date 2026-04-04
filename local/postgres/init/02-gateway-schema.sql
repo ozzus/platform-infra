@@ -37,3 +37,9 @@ create table if not exists processed_events (
     event_type varchar(128) not null,
     processed_at timestamptz not null default now()
 );
+
+grant usage on schema public to gateway;
+grant select, insert, update, delete on all tables in schema public to gateway;
+grant usage, select on all sequences in schema public to gateway;
+alter default privileges in schema public grant select, insert, update, delete on tables to gateway;
+alter default privileges in schema public grant usage, select on sequences to gateway;
