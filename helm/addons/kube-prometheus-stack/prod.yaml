@@ -1,0 +1,10 @@
+grafana:
+  enabled: true
+  admin:
+    existingSecret: grafana-admin
+    userKey: username
+    passwordKey: password
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
