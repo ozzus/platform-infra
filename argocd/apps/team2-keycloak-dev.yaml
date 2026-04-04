@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team2-keycloak-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: team2
+  source:
+    repoURL: https://gitlab.example.com/platform-infra.git
+    targetRevision: main
+    path: helm/charts/keycloak
+    helm:
+      valueFiles:
+        - ../../tenants/team2/dev/keycloak.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team2-dev-auth
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

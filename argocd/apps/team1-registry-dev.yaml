@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team1-registry-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
+spec:
+  project: team1
+  source:
+    repoURL: https://gitlab.example.com/platform-infra.git
+    targetRevision: main
+    path: helm/charts/diasoft-registry
+    helm:
+      valueFiles:
+        - ../../tenants/team1/dev/diasoft-registry.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team1-dev-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

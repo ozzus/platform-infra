@@ -1,0 +1,29 @@
+image:
+  repository: registry.gitlab.example.com/team1/diasoft-registry/registry-api
+  tag: latest
+
+ingress:
+  enabled: true
+  host: registry.dev.team1.example.com
+  tls:
+    enabled: true
+    secretName: team1-dev-registry-tls
+
+env:
+  OBJECT_STORAGE_ENDPOINT: http://minio.team1-dev-data.svc.cluster.local:9000
+  OBJECT_STORAGE_BUCKET: team1-dev-diploma-imports
+  OBJECT_STORAGE_REGION: ru-central1
+  OIDC_ISSUER_URI: https://auth.dev.team1.example.com/realms/diasoft-team1
+  APP_ALLOWED_ORIGINS: https://web.dev.team1.example.com
+  KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+
+externalSecret:
+  enabled: false
+  targetName: team1-registry-dev-secrets
+
+deploymentMetadata:
+  team: team1
+  environment: dev
+  imageTag: latest
+  contractVersion: latest

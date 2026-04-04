@@ -72,45 +72,76 @@ Main remaining gaps:
 Implemented:
 
 - real Yandex resource model in Terraform for `nonprod` and `prod`
+- one-server target runtime based on `k3s` single-node with host-level `Caddy`
 - managed service topology for Kubernetes, PostgreSQL, Redis, Kafka, object storage, IAM, and Lockbox
 - addon Argo applications for ingress, cert-manager, external-secrets, external-dns, monitoring, logging, and tracing
+- single-node addon overlays for ingress-nginx, cert-manager, external-dns, external-secrets, monitoring, logging, and tracing
 - repo-managed addon values files consumed by Argo for every addon/environment
 - local cluster bootstrap manifests for issuer, secret store, alert rules, and Alertmanager routing
+- bootstrap manifests for team-scoped namespaces and shared single-node bootstrap resources
 - environment overlays for `dev`, `stage`, and `prod`
+- tenant overlays for `team1` and `team2` across `dev` and `prod`
 - app sync ordering and namespace creation in Argo
+- isolated Argo `AppProject`s and `Application`s for each team and runtime contour
 - manual live smoke jobs in CI for `dev` and `stage` endpoint checks
+- Caddy-as-code template and bootstrap scripts for host preparation, k3s install, tenant secret rendering, and edge config generation
+- service-repo promotion path that updates pinned tenant overlays in `platform-infra`
 - cutover-oriented runbooks and checklist
 - explicit stage rehearsal runbook for pre-prod validation
 - local compose-based single-host stack for developer onboarding and smoke checks
 
 Main remaining gaps:
 
-- live apply / sync / smoke validation
+- live apply / sync / smoke validation on the target server
+- GitLab runners, mirrored projects, registry credentials, and bootstrap secrets still need real provisioning
 - external-secrets and external-dns bootstrap secrets still need real environment provisioning
-- bootstrap secret rendering is now scripted from Terraform outputs
 - restore, rollback, and alert delivery must still be exercised in `stage`
+
+## Immediate prerequisites for first target-state deploy
+
+To start the first live `k3s + Caddy + ArgoCD` deployment, the following must exist first:
+
+- GitLab projects or mirrors for all four repositories
+- one privileged `docker-build` runner
+- one `infra-validate` runner with `terraform`, `helm`, `kubeconform`, and `yq`
+- GitLab variables for:
+  - `PLATFORM_INFRA_REPO_URL`
+  - `PLATFORM_INFRA_PUSH_URL`
+  - `PLATFORM_INFRA_GITLAB_PROJECT_ID`
+  - `PLATFORM_INFRA_GITLAB_TOKEN`
+  - `CI_REGISTRY_USER`
+  - `CI_REGISTRY_PASSWORD`
+  - `TEAM1_BASE_DOMAIN`
+  - `TEAM2_BASE_DOMAIN`
+  - `SERVER_PUBLIC_IP`
+  - `BOOTSTRAP_SSH_PRIVATE_KEY`
+  - `ACME_EMAIL`
+- resolved root domains for both teams
+- bootstrap secret values for tenant PostgreSQL, Kafka, Redis, object storage, and Keycloak
 
 ## Production-ready assessment
 
 ### Overall readiness
 
-Current overall platform readiness is approximately **90%**.
+Current overall platform readiness is approximately **93%**.
 
 This is close to `prod cutover ready`, but not yet there because the remaining blockers are live-runtime and rehearsal blockers, not code-structure blockers.
 
 ### Approximate readiness by repository
 
-- `diasoft-gateway`: **91%**
-- `diasoft-web`: **91%**
+- `diasoft-gateway`: **93%**
+- `diasoft-web`: **92%**
 - `diasoft-registry`: **84%**
-- `platform-infra`: **88%**
+- `platform-infra`: **94%**
 
 ### What still blocks 100%
 
 The platform is not yet `prod cutover ready` because the following are still open:
 
 - Terraform and Argo changes have not yet been proven against live Yandex Cloud resources
+- GitLab CI is not yet the live canonical execution layer with runners, mirrors, and protected deploy flow
 - bootstrap secrets for external-secrets and external-dns still need environment provisioning
+- live `dev` and `prod` tenant overlays must validate domain isolation, Keycloak isolation, and Caddy edge routing
 - live `dev` and `stage` must validate OIDC, imports, projection, revoke, share-link, and QR flows
 - restore, rollback, and alert delivery must be exercised in a running environment
 

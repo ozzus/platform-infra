@@ -1,0 +1,10 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: diasoft-platform-routing
+  namespace: monitoring
+spec:
+  route:
+    receiver: default
+  receivers:
+    - name: default

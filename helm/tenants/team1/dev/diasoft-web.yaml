@@ -1,0 +1,25 @@
+image:
+  repository: registry.gitlab.example.com/team1/diasoft-web/web
+  tag: latest
+
+runtimeConfig:
+  VITE_AUTH_ENABLED: "true"
+  VITE_OIDC_AUTHORITY: https://auth.dev.team1.example.com/realms/diasoft-team1
+  VITE_OIDC_CLIENT_ID: diasoft-web-team1
+  VITE_OIDC_REDIRECT_URI: https://web.dev.team1.example.com/
+  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.dev.team1.example.com/
+  VITE_GATEWAY_BASE_URL: https://verify.dev.team1.example.com
+  VITE_REGISTRY_BASE_URL: https://registry.dev.team1.example.com
+
+ingress:
+  enabled: true
+  host: web.dev.team1.example.com
+  tls:
+    enabled: true
+    secretName: team1-dev-web-tls
+
+deploymentMetadata:
+  team: team1
+  environment: dev
+  imageTag: latest
+  contractVersion: latest

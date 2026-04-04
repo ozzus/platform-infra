@@ -1,0 +1,38 @@
+replicas: 1
+mode: dev
+
+admin:
+  existingSecret: team1-keycloak-dev-secrets
+
+ingress:
+  enabled: true
+  host: auth.dev.team1.example.com
+  tls:
+    enabled: true
+    secretName: team1-dev-auth-tls
+
+realm:
+  name: diasoft-team1
+  frontendClientId: diasoft-web-team1
+  redirectUris:
+    - https://web.dev.team1.example.com/*
+    - https://web.team1.example.com/*
+  postLogoutRedirectUris:
+    - https://web.dev.team1.example.com/*
+    - https://web.team1.example.com/*
+  bootstrapUsers:
+    - username: super_admin
+      email: super-admin@team1.example.com
+      firstName: Team
+      lastName: One
+      passwordSecretKey: password
+      roles:
+        - super_admin
+
+externalSecret:
+  enabled: false
+  targetName: team1-keycloak-dev-secrets
+
+deploymentMetadata:
+  team: team1
+  environment: dev

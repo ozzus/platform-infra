@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1-dev-app
+  labels:
+    platform.diasoft/team: team1
+    platform.diasoft/environment: dev
+    platform.diasoft/scope: app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1-dev-auth
+  labels:
+    platform.diasoft/team: team1
+    platform.diasoft/environment: dev
+    platform.diasoft/scope: auth
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1-dev-data
+  labels:
+    platform.diasoft/team: team1
+    platform.diasoft/environment: dev
+    platform.diasoft/scope: data
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1-prod-app
+  labels:
+    platform.diasoft/team: team1
+    platform.diasoft/environment: prod
+    platform.diasoft/scope: app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1-prod-auth
+  labels:
+    platform.diasoft/team: team1
+    platform.diasoft/environment: prod
+    platform.diasoft/scope: auth
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team1-prod-data
+  labels:
+    platform.diasoft/team: team1
+    platform.diasoft/environment: prod
+    platform.diasoft/scope: data
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team2-dev-app
+  labels:
+    platform.diasoft/team: team2
+    platform.diasoft/environment: dev
+    platform.diasoft/scope: app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team2-dev-auth
+  labels:
+    platform.diasoft/team: team2
+    platform.diasoft/environment: dev
+    platform.diasoft/scope: auth
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team2-dev-data
+  labels:
+    platform.diasoft/team: team2
+    platform.diasoft/environment: dev
+    platform.diasoft/scope: data
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team2-prod-app
+  labels:
+    platform.diasoft/team: team2
+    platform.diasoft/environment: prod
+    platform.diasoft/scope: app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team2-prod-auth
+  labels:
+    platform.diasoft/team: team2
+    platform.diasoft/environment: prod
+    platform.diasoft/scope: auth
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team2-prod-data
+  labels:
+    platform.diasoft/team: team2
+    platform.diasoft/environment: prod
+    platform.diasoft/scope: data

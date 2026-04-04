@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: diasoft-platform-basic-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: diasoft-platform
+      rules:
+        - alert: DiasoftGatewayDown
+          expr: absent(up{job="diasoft-gateway-api"})
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: Diasoft gateway is not being scraped

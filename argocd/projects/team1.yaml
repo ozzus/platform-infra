@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team1
+  namespace: argocd
+spec:
+  description: Team 1 isolated project for one-server multi-tenant deployment.
+  sourceRepos:
+    - https://gitlab.example.com/platform-infra.git
+  destinations:
+    - namespace: team1-*
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  orphanedResources:
+    warn: true

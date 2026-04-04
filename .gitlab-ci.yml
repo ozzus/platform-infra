@@ -55,6 +55,11 @@ helm_lint:
     - helm lint helm/charts/keycloak -f helm/environments/dev/keycloak.yaml
     - helm lint helm/charts/keycloak -f helm/environments/stage/keycloak.yaml
     - helm lint helm/charts/keycloak -f helm/environments/prod/keycloak.yaml
+    - |
+      find helm/tenants -mindepth 3 -maxdepth 3 -type f -name '*.yaml' | sort | while read -r values_file; do
+        chart_name=$(basename "$values_file" .yaml)
+        helm lint "helm/charts/$chart_name" -f "$values_file"
+      done
 
 helm_template:
   stage: validate
@@ -72,6 +77,42 @@ helm_template:
     - helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/prod/diasoft-registry.yaml >/tmp/registry-prod.yaml
     - helm template diasoft-web helm/charts/diasoft-web -f helm/environments/prod/diasoft-web.yaml >/tmp/web-prod.yaml
     - helm template keycloak helm/charts/keycloak -f helm/environments/prod/keycloak.yaml >/tmp/keycloak-prod.yaml
+    - |
+      find helm/tenants -mindepth 3 -maxdepth 3 -type f -name '*.yaml' | sort | while read -r values_file; do
+        chart_name=$(basename "$values_file" .yaml)
+        tenant_name=$(printf '%s' "$values_file" | tr '/.' '-' )
+        helm template "$tenant_name" "helm/charts/$chart_name" -f "$values_file" >/dev/null
+      done
+
+kubeconform_validate:
+  stage: validate
+  image: alpine:3.21
+  before_script:
+    - apk add --no-cache curl tar
+    - HELM_VERSION=3.16.2
+    - KUBECONFORM_VERSION=0.6.7
+    - curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" -o /tmp/helm.tgz
+    - tar -xzf /tmp/helm.tgz -C /tmp
+    - install /tmp/linux-amd64/helm /usr/local/bin/helm
+    - curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" -o /tmp/kubeconform.tgz
+    - tar -xzf /tmp/kubeconform.tgz -C /tmp
+    - install /tmp/kubeconform /usr/local/bin/kubeconform
+  script:
+    - |
+      validate_rendered() {
+        chart_name=$1
+        values_file=$2
+        helm template test "helm/charts/$chart_name" -f "$values_file" | kubeconform -strict -summary -ignore-missing-schemas
+      }
+    - validate_rendered diasoft-gateway helm/environments/dev/diasoft-gateway.yaml
+    - validate_rendered diasoft-registry helm/environments/dev/diasoft-registry.yaml
+    - validate_rendered diasoft-web helm/environments/dev/diasoft-web.yaml
+    - validate_rendered keycloak helm/environments/dev/keycloak.yaml
+    - |
+      find helm/tenants -mindepth 3 -maxdepth 3 -type f -name '*.yaml' | sort | while read -r values_file; do
+        chart_name=$(basename "$values_file" .yaml)
+        validate_rendered "$chart_name" "$values_file"
+      done
 
 argocd_validate:
   stage: validate
@@ -81,17 +122,34 @@ argocd_validate:
     - for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.spec.destination.namespace' "$file")" != "null" ] || exit 1; done
     - for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.spec.source.path // .spec.source.chart // .spec.sources[0].path // .spec.sources[0].chart' "$file")" != "null" ] || exit 1; done
     - for file in $(find argocd/apps -name '*.yaml' | sort); do yq -r '.spec.sources[]?.helm.valueFiles[]? // ""' "$file" | while read -r value_file; do [ -z "$value_file" ] && continue; path=${value_file#\$values/}; [ -f "$path" ] || exit 1; done; done
+    - for file in $(find argocd/projects -name '*.yaml' | sort); do [ "$(yq '.kind' "$file")" = "AppProject" ] || exit 1; done
+    - for file in $(find argocd/projects -name '*.yaml' | sort); do [ "$(yq '.spec.sourceRepos[0]' "$file")" != "null" ] || exit 1; done
     - for file in $(find argocd/manifests -name '*.yaml' | sort); do [ "$(yq '.apiVersion' "$file")" != "null" ] || exit 1; done
 
 values_policy_validate:
   stage: validate
-  image: alpine:3.21
+  image: mikefarah/yq:4
   script:
     - "! grep -R -n -E 'SPRING_DATASOURCE_PASSWORD:|OBJECT_STORAGE_SECRET_KEY:|KC_DB_PASSWORD:|password: admin' helm/environments/stage helm/environments/prod"
     - "! grep -R -n -E 'ChangeMe123!' helm/environments/prod"
     - "! grep -R -n -E 'bootstrapUsers:' helm/environments/prod"
     - "! grep -R -n -E 'mode: dev' helm/environments/stage helm/environments/prod"
     - "! grep -R -n -E 'existingSecret: \"\"' helm/environments/stage helm/environments/prod helm/addons/prod"
+    - |
+      team1_prod_root=$(yq -r '.ingress.host' helm/tenants/team1/prod/diasoft-web.yaml | sed 's/^web\.//')
+      team2_prod_root=$(yq -r '.ingress.host' helm/tenants/team2/prod/diasoft-web.yaml | sed 's/^web\.//')
+      [ "$team1_prod_root" != "$team2_prod_root" ]
+    - |
+      team1_dev_root=$(yq -r '.ingress.host' helm/tenants/team1/dev/diasoft-web.yaml | sed 's/^web\.dev\.//')
+      team2_dev_root=$(yq -r '.ingress.host' helm/tenants/team2/dev/diasoft-web.yaml | sed 's/^web\.dev\.//')
+      [ "$team1_dev_root" != "$team2_dev_root" ]
+    - |
+      ! grep -R -n -E 'localhost|127\.0\.0\.1|sslip\.io' helm/tenants/team1/prod helm/tenants/team2/prod
+    - |
+      ! grep -R -n -E 'bootstrapUsers:' helm/tenants/team1/prod/keycloak.yaml helm/tenants/team2/prod/keycloak.yaml
+    - |
+      [ "$(yq -r '.mode' helm/tenants/team1/prod/keycloak.yaml)" = "prod" ]
+      [ "$(yq -r '.mode' helm/tenants/team2/prod/keycloak.yaml)" = "prod" ]
 
 bootstrap_docs_validate:
   stage: validate
@@ -107,6 +165,26 @@ bootstrap_docs_validate:
     - test -f docs/runbooks/dlq-replay.md
     - test -f docs/runbooks/alert-delivery-smoke.md
     - test -f docs/runbooks/stage-rehearsal.md
+    - test -f docs/one-server-multi-team-deploy.md
+
+bootstrap_scripts_validate:
+  stage: validate
+  image: alpine:3.21
+  script:
+    - sh -n scripts/bootstrap-host.sh
+    - sh -n scripts/bootstrap-k3s.sh
+    - sh -n scripts/render-caddyfile.sh
+    - sh -n scripts/render-tenant-secrets.sh
+    - test -f deploy/one-server/Caddyfile.tmpl
+    - test -f deploy/one-server/domains.env.example
+
+caddy_config_validate:
+  stage: validate
+  image: caddy:2.9.1-alpine
+  script:
+    - mkdir -p /tmp/rendered
+    - sh scripts/render-caddyfile.sh deploy/one-server/domains.env.example >/tmp/rendered/Caddyfile
+    - caddy validate --config /tmp/rendered/Caddyfile
 
 live_smoke_nonprod:
   stage: smoke
@@ -133,3 +211,29 @@ live_smoke_stage:
     - curl -fsS "$STAGE_REGISTRY_URL/actuator/health" >/dev/null
     - curl -fsS "$STAGE_VERIFY_URL/healthz" >/dev/null
     - curl -fsS "$STAGE_WEB_URL" >/dev/null
+
+live_smoke_team1:
+  stage: smoke
+  image: alpine:3.21
+  rules:
+    - if: '$TEAM1_WEB_URL && $TEAM1_REGISTRY_URL && $TEAM1_VERIFY_URL && $TEAM1_AUTH_URL'
+      when: manual
+  script:
+    - apk add --no-cache curl
+    - curl -fsS "$TEAM1_AUTH_URL/realms/diasoft-team1/.well-known/openid-configuration" >/dev/null
+    - curl -fsS "$TEAM1_REGISTRY_URL/actuator/health" >/dev/null
+    - curl -fsS "$TEAM1_VERIFY_URL/healthz" >/dev/null
+    - curl -fsS "$TEAM1_WEB_URL" >/dev/null
+
+live_smoke_team2:
+  stage: smoke
+  image: alpine:3.21
+  rules:
+    - if: '$TEAM2_WEB_URL && $TEAM2_REGISTRY_URL && $TEAM2_VERIFY_URL && $TEAM2_AUTH_URL'
+      when: manual
+  script:
+    - apk add --no-cache curl
+    - curl -fsS "$TEAM2_AUTH_URL/realms/diasoft-team2/.well-known/openid-configuration" >/dev/null
+    - curl -fsS "$TEAM2_REGISTRY_URL/actuator/health" >/dev/null
+    - curl -fsS "$TEAM2_VERIFY_URL/healthz" >/dev/null
+    - curl -fsS "$TEAM2_WEB_URL" >/dev/null

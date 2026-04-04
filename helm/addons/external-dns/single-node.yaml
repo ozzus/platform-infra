@@ -1,0 +1,6 @@
+config:
+  folder_id: folder-placeholder
+auth:
+  existingSecret:
+    name: yc-externaldns-auth
+    key: authorized-key.json

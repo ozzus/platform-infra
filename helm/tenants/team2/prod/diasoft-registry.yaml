@@ -1,0 +1,29 @@
+image:
+  repository: registry.gitlab.example.com/team2/diasoft-registry/registry-api
+  tag: stable
+
+ingress:
+  enabled: true
+  host: registry.team2.example.org
+  tls:
+    enabled: true
+    secretName: team2-prod-registry-tls
+
+env:
+  OBJECT_STORAGE_ENDPOINT: http://minio.team2-prod-data.svc.cluster.local:9000
+  OBJECT_STORAGE_BUCKET: team2-prod-diploma-imports
+  OBJECT_STORAGE_REGION: ru-central1
+  OIDC_ISSUER_URI: https://auth.team2.example.org/realms/diasoft-team2
+  APP_ALLOWED_ORIGINS: https://web.team2.example.org
+  KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+
+externalSecret:
+  enabled: false
+  targetName: team2-registry-prod-secrets
+
+deploymentMetadata:
+  team: team2
+  environment: prod
+  imageTag: stable
+  contractVersion: stable

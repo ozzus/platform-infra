@@ -1,0 +1,18 @@
+{
+	email {{ACME_EMAIL}}
+}
+
+(diasoft_common_headers) {
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+	}
+}
+
+{{TEAM1_DEV_HOSTS}}, {{TEAM1_PROD_HOSTS}}, {{TEAM2_DEV_HOSTS}}, {{TEAM2_PROD_HOSTS}} {
+	import diasoft_common_headers
+	encode zstd gzip
+	reverse_proxy {{INGRESS_HTTP_UPSTREAM}}
+}

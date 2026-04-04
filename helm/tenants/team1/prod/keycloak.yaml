@@ -1,0 +1,34 @@
+replicas: 2
+mode: prod
+
+admin:
+  existingSecret: team1-keycloak-prod-secrets
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+
+ingress:
+  enabled: true
+  host: auth.team1.example.com
+  tls:
+    enabled: true
+    secretName: team1-prod-auth-tls
+
+realm:
+  name: diasoft-team1
+  frontendClientId: diasoft-web-team1
+  redirectUris:
+    - https://web.team1.example.com/*
+  postLogoutRedirectUris:
+    - https://web.team1.example.com/*
+  bootstrapUsers: []
+
+externalSecret:
+  enabled: false
+  targetName: team1-keycloak-prod-secrets
+
+deploymentMetadata:
+  team: team1
+  environment: prod
