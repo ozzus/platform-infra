@@ -66,9 +66,14 @@ Implemented:
 - Kafka schema and internal OpenAPI contracts
 - Docker-backed integration slice
 - Spring Kafka SASL runtime wiring for managed Kafka
+- local WIP for `upload_sessions`, `import_chunks`, and chunk-oriented import lifecycle inside the registry service layer
 
 Main remaining gaps:
 
+- session-based upload API is not exposed end-to-end through registry controllers and `diasoft-gateway`
+- worker topology is still single-lane `import-worker`, not split into normalizer plus parallel chunk workers
+- Helm/compose runtime is still not aligned with the target import topology
+- physical PostgreSQL partitioning planned for large-scale ingest is not implemented yet
 - live CI/runtime verification is still the first hard proof point
 - stage rehearsal for import, revoke, and outbox propagation still needs to happen
 
@@ -86,6 +91,7 @@ Main remaining gaps:
 
 - live Keycloak-backed smoke in running `dev/stage`
 - final UX/error polish
+- upload UX is still on the compatibility multipart endpoint and does not support the target upload-session flow
 
 ### `platform-infra`
 
@@ -154,15 +160,15 @@ Current DNS status for `team1`:
 
 ### Overall readiness
 
-Current overall platform readiness is approximately **93%**.
+Current overall platform readiness is approximately **88%**.
 
 This is close to `prod cutover ready`, but not yet there because the remaining blockers are live-runtime and rehearsal blockers, not code-structure blockers.
 
 ### Approximate readiness by repository
 
-- `diasoft-gateway`: **93%**
-- `diasoft-web`: **92%**
-- `diasoft-registry`: **84%**
+- `diasoft-gateway`: **91%**
+- `diasoft-web`: **89%**
+- `diasoft-registry`: **76%**
 - `platform-infra`: **94%**
 
 ### What still blocks 100%
@@ -176,6 +182,10 @@ The platform is not yet `prod cutover ready` because the following are still ope
 - `diplomverify.ru` must be repointed from placeholder IPs to the actual public server before domain cutover can be considered complete
 - live `dev` and `stage` must validate OIDC, imports, projection, revoke, share-link, and QR flows
 - restore, rollback, and alert delivery must be exercised in a running environment
+- the production ingest architecture for `800k/week` is only partially implemented:
+  - local registry code has session/chunk foundations
+  - gateway contract is still on compatibility upload
+  - runtime still has one generic import worker
 
 ## Bottom line
 

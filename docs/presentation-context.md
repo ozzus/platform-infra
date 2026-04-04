@@ -222,6 +222,34 @@
 - production-shaped target уже выбран как `signed QR + online status check`
 - это осознанная эволюция, а не смена концепции на ходу
 
+## Целевая ingest-архитектура под массовый выпуск
+
+Для сценария `800k` дипломов за неделю на одном app server зафиксирована production-shaped ingest-модель:
+
+- внешний UX для вуза остается файловым
+- поддерживаются `CSV` и `XLSX`
+- большие выпуски загружаются как batch из нескольких файлов
+- файлы должны уходить напрямую в object storage через upload session
+- далее import job проходит стадии:
+  - `uploaded`
+  - `normalizing`
+  - `chunked`
+  - `processing`
+  - `completed | partially_failed | failed`
+- normalize и chunk processing должны выполняться отдельно от API runtime
+
+Почему это важно для презентации:
+
+- мы показываем, что видим проблему burst-нагрузки в сезон массовых выпусков
+- и решаем ее через очередь, object storage и chunk processing, а не через один синхронный upload worker
+
+Что нужно честно проговорить на защите:
+
+- в коде `diasoft-registry` уже начата реализация `upload_sessions` и `import_chunks`
+- но текущий live/runtime contour все еще не соответствует целевой worker topology
+- сейчас infra и live deploy все еще опираются на один compatibility `registry-import-worker`
+- значит production ingest architecture выбрана и частично начата, но еще не доведена до финального runtime состояния
+
 ## Роли внутри системы
 
 ### Вуз
