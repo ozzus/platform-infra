@@ -1,0 +1,52 @@
+image:
+  tag: dev
+ingress:
+  enabled: true
+  host: registry.dev.example.com
+  tls:
+    enabled: true
+    secretName: registry-dev-tls
+env:
+  OBJECT_STORAGE_ENDPOINT: https://storage.yandexcloud.net
+  OBJECT_STORAGE_BUCKET: diploma-imports
+  OBJECT_STORAGE_REGION: ru-central1
+  OIDC_ISSUER_URI: https://auth.dev.example.com/realms/diasoft
+  APP_ALLOWED_ORIGINS: https://web.dev.example.com,http://localhost:5173
+  KAFKA_SECURITY_PROTOCOL: SASL_PLAINTEXT
+  KAFKA_SASL_MECHANISM: SCRAM-SHA-512
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+externalSecret:
+  targetName: diasoft-registry-dev-secrets
+  data:
+    - secretKey: database_url
+      remoteRef:
+        key: diasoft-registry-dev
+        property: database_url
+    - secretKey: database_username
+      remoteRef:
+        key: diasoft-registry-dev
+        property: database_username
+    - secretKey: database_password
+      remoteRef:
+        key: diasoft-registry-dev
+        property: database_password
+    - secretKey: kafka_bootstrap_servers
+      remoteRef:
+        key: diasoft-registry-dev
+        property: kafka_bootstrap_servers
+    - secretKey: kafka_username
+      remoteRef:
+        key: diasoft-registry-dev
+        property: kafka_username
+    - secretKey: kafka_password
+      remoteRef:
+        key: diasoft-registry-dev
+        property: kafka_password
+    - secretKey: object_storage_access_key
+      remoteRef:
+        key: diasoft-registry-dev
+        property: object_storage_access_key
+    - secretKey: object_storage_secret_key
+      remoteRef:
+        key: diasoft-registry-dev
+        property: object_storage_secret_key
