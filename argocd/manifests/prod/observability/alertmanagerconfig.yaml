@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: diasoft-platform-routing
+  namespace: monitoring
+spec:
+  route:
+    receiver: platform-webhook
+    groupBy:
+      - alertname
+      - service
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 2h
+  receivers:
+    - name: platform-webhook
+      webhookConfigs:
+        - url: http://alert-delivery.monitoring.svc.cluster.local/hooks/default
+          sendResolved: true
