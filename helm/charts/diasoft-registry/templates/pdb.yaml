@@ -1,0 +1,38 @@
+{{- if and .Values.components.api.enabled .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: diasoft-registry-api
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: diasoft-registry
+      component: api
+{{- end }}
+{{- if and .Values.components.importWorker.enabled .Values.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: diasoft-registry-import-worker
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: diasoft-registry
+      component: import-worker
+{{- end }}
+{{- if and .Values.components.outboxPublisher.enabled .Values.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: diasoft-registry-outbox-publisher
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: diasoft-registry
+      component: outbox-publisher
+{{- end }}
