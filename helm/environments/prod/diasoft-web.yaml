@@ -1,0 +1,16 @@
+image:
+  tag: prod
+ingress:
+  enabled: true
+  host: web.example.com
+  tls:
+    enabled: true
+    secretName: web-prod-tls
+runtimeConfig:
+  VITE_AUTH_ENABLED: "true"
+  VITE_OIDC_AUTHORITY: https://auth.example.com/realms/diasoft
+  VITE_OIDC_CLIENT_ID: diasoft-web
+  VITE_OIDC_REDIRECT_URI: https://web.example.com/
+  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.example.com/
+  VITE_GATEWAY_BASE_URL: https://verify.example.com
+  VITE_REGISTRY_BASE_URL: https://registry.example.com
