@@ -35,12 +35,26 @@
 - следующий реальный демонстрационный шаг это `k3s` single-node runtime с GitLab CI/CD и ArgoCD
 - на защите можно честно говорить, что кодовый и инфраструктурный контур уже подготовлены, а remaining gap теперь в live bootstrap и rehearsal
 
-Публичные адреса команды 1:
+Текущий live fallback команды 1:
 
 - `https://web.team1.213.165.211.103.sslip.io`
 - `https://verify.team1.213.165.211.103.sslip.io`
 - `https://registry.team1.213.165.211.103.sslip.io`
 - `https://auth.team1.213.165.211.103.sslip.io`
+
+Целевые публичные адреса команды 1:
+
+- `https://web.diplomverify.ru`
+- `https://verify.diplomverify.ru`
+- `https://registry.diplomverify.ru`
+- `https://auth.diplomverify.ru`
+
+Фактический блокер на момент последнего обновления:
+
+- compose and gateway runtime are now being aligned to `diplomverify.ru`
+- Swagger UI is switched to self-hosted assets so it no longer depends on `unpkg.com`
+- external DNS for `diplomverify.ru` still resolves to non-server placeholder IPs instead of `213.165.211.103`
+- until DNS is corrected, the only externally validated URLs remain the `sslip.io` fallback hosts
 
 ## Что означает кейс со стороны заказчика
 

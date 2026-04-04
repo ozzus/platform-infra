@@ -124,6 +124,12 @@ Current chosen root domains:
 - `team1`: `diplomverify.ru`
 - `team2`: `edu-proof.ru`
 
+Current DNS status for `team1`:
+
+- target public domains are reserved and wired in tenant overlays
+- current external DNS answers for `web/verify/registry/auth.diplomverify.ru` still point to placeholder `198.18.0.x` addresses, not to `213.165.211.103`
+- because of that, the validated live fallback remains the `sslip.io` host set until DNS is corrected
+
 ## Production-ready assessment
 
 ### Overall readiness
@@ -147,6 +153,7 @@ The platform is not yet `prod cutover ready` because the following are still ope
 - GitLab CI is not yet the live canonical execution layer with runners, mirrors, and protected deploy flow
 - bootstrap secrets for external-secrets and external-dns still need environment provisioning
 - live `dev` and `prod` tenant overlays must validate domain isolation, Keycloak isolation, and Caddy edge routing
+- `diplomverify.ru` must be repointed from placeholder IPs to the actual public server before domain cutover can be considered complete
 - live `dev` and `stage` must validate OIDC, imports, projection, revoke, share-link, and QR flows
 - restore, rollback, and alert delivery must be exercised in a running environment
 

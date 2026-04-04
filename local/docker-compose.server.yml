@@ -24,13 +24,13 @@ services:
 
   registry-api:
     environment:
-      APP_ALLOWED_ORIGINS: https://web.team1.213.165.211.103.sslip.io
-      GATEWAY_PUBLIC_BASE_URL: https://verify.team1.213.165.211.103.sslip.io
+      APP_ALLOWED_ORIGINS: https://web.diplomverify.ru
+      GATEWAY_PUBLIC_BASE_URL: https://verify.diplomverify.ru
       GATEWAY_SERVICE_TOKEN: diasoft-service-token
 
   gateway-api:
     environment:
-      HTTP_ALLOWED_ORIGINS: https://web.team1.213.165.211.103.sslip.io
+      HTTP_ALLOWED_ORIGINS: https://web.diplomverify.ru
       AUTH_JWT_SECRET: diasoft-team1-demo-secret
       REGISTRY_INTERNAL_BASE_URL: http://registry-api:8080
       REGISTRY_SERVICE_TOKEN: diasoft-service-token
@@ -38,8 +38,8 @@ services:
   web:
     environment:
       VITE_AUTH_ENABLED: "false"
-      VITE_GATEWAY_BASE_URL: https://verify.team1.213.165.211.103.sslip.io
-      VITE_REGISTRY_BASE_URL: https://registry.team1.213.165.211.103.sslip.io
-      VITE_OIDC_AUTHORITY: https://auth.team1.213.165.211.103.sslip.io/realms/diasoft
-      VITE_OIDC_REDIRECT_URI: https://web.team1.213.165.211.103.sslip.io/
-      VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.team1.213.165.211.103.sslip.io/
+      VITE_GATEWAY_BASE_URL: https://verify.diplomverify.ru
+      VITE_REGISTRY_BASE_URL: https://registry.diplomverify.ru
+      VITE_OIDC_AUTHORITY: https://auth.diplomverify.ru/realms/diasoft
+      VITE_OIDC_REDIRECT_URI: https://web.diplomverify.ru/
+      VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.diplomverify.ru/
