@@ -1,0 +1,262 @@
+name: diasoft-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:${REDPANDA_PORT:-19092}
+      - --pandaproxy-addr=internal://0.0.0.0:8082
+      - --advertise-pandaproxy-addr=internal://redpanda:8082
+    ports:
+      - "${REDPANDA_PORT:-19092}:19092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --brokers=127.0.0.1:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  kafka-init:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.7
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/scripts/create-topics.sh"]
+    volumes:
+      - ./redpanda/create-topics.sh:/scripts/create-topics.sh:ro
+    restart: "no"
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.0
+    command: ["start-dev", "--import-realm"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: diasoft_keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "${KEYCLOAK_PORT:-8083}:8080"
+    volumes:
+      - ./keycloak/diasoft-realm.json:/opt/keycloak/data/import/diasoft-realm.json:ro
+
+  registry-api:
+    build:
+      context: ../../diasoft-registry
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+    environment:
+      APP_RUNTIME_MODE: api
+      APP_SECURITY_ENABLED: "false"
+      APP_DEV_SUBJECT: local-dev-user
+      APP_DEV_ROLES: super_admin,student
+      APP_DEV_UNIVERSITY_ID: 11111111-1111-1111-1111-111111111111
+      APP_DEV_STUDENT_EXTERNAL_ID: student-001
+      APP_ALLOWED_ORIGINS: http://localhost:${WEB_PORT:-8082},http://localhost:5173
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/diasoft_registry
+      SPRING_DATASOURCE_USERNAME: registry
+      SPRING_DATASOURCE_PASSWORD: registry
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: diploma-imports
+      OBJECT_STORAGE_REGION: ru-central1
+      OBJECT_STORAGE_ACCESS_KEY: minioadmin
+      OBJECT_STORAGE_SECRET_KEY: minioadmin
+      OBJECT_STORAGE_PATH_STYLE_ACCESS: "true"
+      OBJECT_STORAGE_AUTO_CREATE_BUCKET: "true"
+      GATEWAY_PUBLIC_BASE_URL: http://localhost:${GATEWAY_PORT:-8080}
+    ports:
+      - "${REGISTRY_PORT:-8081}:8080"
+
+  registry-import-worker:
+    build:
+      context: ../../diasoft-registry
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+    environment:
+      APP_RUNTIME_MODE: import-worker
+      APP_SECURITY_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/diasoft_registry
+      SPRING_DATASOURCE_USERNAME: registry
+      SPRING_DATASOURCE_PASSWORD: registry
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: diploma-imports
+      OBJECT_STORAGE_REGION: ru-central1
+      OBJECT_STORAGE_ACCESS_KEY: minioadmin
+      OBJECT_STORAGE_SECRET_KEY: minioadmin
+      OBJECT_STORAGE_PATH_STYLE_ACCESS: "true"
+      OBJECT_STORAGE_AUTO_CREATE_BUCKET: "true"
+
+  registry-outbox-publisher:
+    build:
+      context: ../../diasoft-registry
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      APP_RUNTIME_MODE: outbox-publisher
+      APP_SECURITY_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/diasoft_registry
+      SPRING_DATASOURCE_USERNAME: registry
+      SPRING_DATASOURCE_PASSWORD: registry
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+
+  gateway-api:
+    build:
+      context: ../../diasoft-gateway
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      HTTP_ADDRESS: :8080
+      METRICS_ADDRESS: :9090
+      DATABASE_URL: postgres://gateway:gateway@postgres:5432/diasoft_gateway?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      KAFKA_BROKERS: redpanda:9092
+      KAFKA_SASL_ENABLED: "false"
+      KAFKA_TLS_ENABLED: "false"
+      HTTP_ALLOWED_ORIGINS: http://localhost:${WEB_PORT:-8082},http://localhost:5173
+      TRACING_ENABLED: "false"
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+
+  gateway-consumer:
+    build:
+      context: ../../diasoft-gateway
+      dockerfile: Dockerfile.consumer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      HTTP_ADDRESS: :8080
+      METRICS_ADDRESS: :9090
+      DATABASE_URL: postgres://gateway:gateway@postgres:5432/diasoft_gateway?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      KAFKA_BROKERS: redpanda:9092
+      KAFKA_SASL_ENABLED: "false"
+      KAFKA_TLS_ENABLED: "false"
+      TRACING_ENABLED: "false"
+
+  web:
+    build:
+      context: ../../diasoft-web
+    restart: unless-stopped
+    depends_on:
+      registry-api:
+        condition: service_started
+      gateway-api:
+        condition: service_started
+    environment:
+      VITE_AUTH_ENABLED: "false"
+      VITE_GATEWAY_BASE_URL: http://localhost:${GATEWAY_PORT:-8080}
+      VITE_REGISTRY_BASE_URL: http://localhost:${REGISTRY_PORT:-8081}
+      VITE_OIDC_AUTHORITY: http://localhost:${KEYCLOAK_PORT:-8083}/realms/diasoft
+      VITE_OIDC_CLIENT_ID: diasoft-web
+      VITE_OIDC_REDIRECT_URI: http://localhost:${WEB_PORT:-8082}/
+      VITE_OIDC_POST_LOGOUT_REDIRECT_URI: http://localhost:${WEB_PORT:-8082}/
+    ports:
+      - "${WEB_PORT:-8082}:80"
+
+volumes:
+  postgres-data:
+  minio-data:
