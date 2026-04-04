@@ -1,0 +1,62 @@
+{{- if and .Values.components.api.enabled .Values.components.api.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: diasoft-registry-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: diasoft-registry-api
+  minReplicas: {{ .Values.components.api.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.components.api.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+{{- end }}
+{{- if and .Values.components.importWorker.enabled .Values.components.importWorker.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: diasoft-registry-import-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: diasoft-registry-import-worker
+  minReplicas: {{ .Values.components.importWorker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.components.importWorker.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+{{- end }}
+{{- if and .Values.components.outboxPublisher.enabled .Values.components.outboxPublisher.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: diasoft-registry-outbox-publisher
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: diasoft-registry-outbox-publisher
+  minReplicas: {{ .Values.components.outboxPublisher.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.components.outboxPublisher.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+{{- end }}
