@@ -1,0 +1,49 @@
+api:
+  image:
+    tag: prod
+  ingress:
+    enabled: true
+    host: verify.example.com
+    tls:
+      enabled: true
+      secretName: verify-prod-tls
+consumer:
+  image:
+    tag: prod
+replayer:
+  image:
+    tag: prod
+env:
+  HTTP_ALLOWED_ORIGINS: https://web.example.com
+  HTTP_TRUSTED_PROXIES: 10.0.0.0/8,127.0.0.1/32
+  KAFKA_SASL_ENABLED: "true"
+  KAFKA_SASL_MECHANISM: SCRAM-SHA-512
+  KAFKA_TLS_ENABLED: "false"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+externalSecret:
+  targetName: diasoft-gateway-prod-secrets
+  data:
+    - secretKey: kafka_brokers
+      remoteRef:
+        key: diasoft-gateway-prod
+        property: kafka_brokers
+    - secretKey: database_url
+      remoteRef:
+        key: diasoft-gateway-prod
+        property: database_url
+    - secretKey: redis_addr
+      remoteRef:
+        key: diasoft-gateway-prod
+        property: redis_addr
+    - secretKey: redis_password
+      remoteRef:
+        key: diasoft-gateway-prod
+        property: redis_password
+    - secretKey: kafka_username
+      remoteRef:
+        key: diasoft-gateway-prod
+        property: kafka_username
+    - secretKey: kafka_password
+      remoteRef:
+        key: diasoft-gateway-prod
+        property: kafka_password
