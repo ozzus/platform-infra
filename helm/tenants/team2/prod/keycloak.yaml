@@ -11,7 +11,7 @@ autoscaling:
 
 ingress:
   enabled: true
-  host: auth.team2.example.org
+  host: auth.edu-proof.ru
   tls:
     enabled: true
     secretName: team2-prod-auth-tls
@@ -20,9 +20,9 @@ realm:
   name: diasoft-team2
   frontendClientId: diasoft-web-team2
   redirectUris:
-    - https://web.team2.example.org/*
+    - https://web.edu-proof.ru/*
   postLogoutRedirectUris:
-    - https://web.team2.example.org/*
+    - https://web.edu-proof.ru/*
   bootstrapUsers: []
 
 externalSecret:

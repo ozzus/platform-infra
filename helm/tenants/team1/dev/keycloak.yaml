@@ -6,7 +6,7 @@ admin:
 
 ingress:
   enabled: true
-  host: auth.dev.team1.example.com
+  host: auth.dev.diplomverify.ru
   tls:
     enabled: true
     secretName: team1-dev-auth-tls
@@ -15,14 +15,14 @@ realm:
   name: diasoft-team1
   frontendClientId: diasoft-web-team1
   redirectUris:
-    - https://web.dev.team1.example.com/*
-    - https://web.team1.example.com/*
+    - https://web.dev.diplomverify.ru/*
+    - https://web.diplomverify.ru/*
   postLogoutRedirectUris:
-    - https://web.dev.team1.example.com/*
-    - https://web.team1.example.com/*
+    - https://web.dev.diplomverify.ru/*
+    - https://web.diplomverify.ru/*
   bootstrapUsers:
     - username: super_admin
-      email: super-admin@team1.example.com
+      email: super-admin@diplomverify.ru
       firstName: Team
       lastName: One
       passwordSecretKey: password

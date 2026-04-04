@@ -119,6 +119,11 @@ To start the first live `k3s + Caddy + ArgoCD` deployment, the following must ex
 - resolved root domains for both teams
 - bootstrap secret values for tenant PostgreSQL, Kafka, Redis, object storage, and Keycloak
 
+Current chosen root domains:
+
+- `team1`: `diplomverify.ru`
+- `team2`: `edu-proof.ru`
+
 ## Production-ready assessment
 
 ### Overall readiness

@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://gitlab.example.com/platform-infra.git
+    repoURL: https://gitlab.com/ozzus/platform-infra.git
     targetRevision: main
     path: argocd/manifests/prod/bootstrap
   destination:

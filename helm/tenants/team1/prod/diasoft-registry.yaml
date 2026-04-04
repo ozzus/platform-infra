@@ -1,10 +1,10 @@
 image:
-  repository: registry.gitlab.example.com/team1/diasoft-registry/registry-api
+  repository: registry.gitlab.com/ozzus/diasoft-registry/registry-api
   tag: stable
 
 ingress:
   enabled: true
-  host: registry.team1.example.com
+  host: registry.diplomverify.ru
   tls:
     enabled: true
     secretName: team1-prod-registry-tls
@@ -13,8 +13,8 @@ env:
   OBJECT_STORAGE_ENDPOINT: http://minio.team1-prod-data.svc.cluster.local:9000
   OBJECT_STORAGE_BUCKET: team1-prod-diploma-imports
   OBJECT_STORAGE_REGION: ru-central1
-  OIDC_ISSUER_URI: https://auth.team1.example.com/realms/diasoft-team1
-  APP_ALLOWED_ORIGINS: https://web.team1.example.com
+  OIDC_ISSUER_URI: https://auth.diplomverify.ru/realms/diasoft-team1
+  APP_ALLOWED_ORIGINS: https://web.diplomverify.ru
   KAFKA_SECURITY_PROTOCOL: PLAINTEXT
   OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
 

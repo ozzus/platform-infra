@@ -1,19 +1,19 @@
 image:
-  repository: registry.gitlab.example.com/team1/diasoft-web/web
+  repository: registry.gitlab.com/ozzus/diasoft-web/diasoft-web
   tag: stable
 
 runtimeConfig:
   VITE_AUTH_ENABLED: "true"
-  VITE_OIDC_AUTHORITY: https://auth.team1.example.com/realms/diasoft-team1
+  VITE_OIDC_AUTHORITY: https://auth.diplomverify.ru/realms/diasoft-team1
   VITE_OIDC_CLIENT_ID: diasoft-web-team1
-  VITE_OIDC_REDIRECT_URI: https://web.team1.example.com/
-  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.team1.example.com/
-  VITE_GATEWAY_BASE_URL: https://verify.team1.example.com
-  VITE_REGISTRY_BASE_URL: https://registry.team1.example.com
+  VITE_OIDC_REDIRECT_URI: https://web.diplomverify.ru/
+  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.diplomverify.ru/
+  VITE_GATEWAY_BASE_URL: https://verify.diplomverify.ru
+  VITE_REGISTRY_BASE_URL: https://registry.diplomverify.ru
 
 ingress:
   enabled: true
-  host: web.team1.example.com
+  host: web.diplomverify.ru
   tls:
     enabled: true
     secretName: team1-prod-web-tls

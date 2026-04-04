@@ -11,7 +11,7 @@ autoscaling:
 
 ingress:
   enabled: true
-  host: auth.team1.example.com
+  host: auth.diplomverify.ru
   tls:
     enabled: true
     secretName: team1-prod-auth-tls
@@ -20,9 +20,9 @@ realm:
   name: diasoft-team1
   frontendClientId: diasoft-web-team1
   redirectUris:
-    - https://web.team1.example.com/*
+    - https://web.diplomverify.ru/*
   postLogoutRedirectUris:
-    - https://web.team1.example.com/*
+    - https://web.diplomverify.ru/*
   bootstrapUsers: []
 
 externalSecret:

@@ -24,6 +24,11 @@
 - объяснить модель `Caddy -> ingress-nginx -> isolated team namespaces`
 - отдельно подчеркнуть, что команды разделяются доменами, auth-контуром, stateful-зависимостями и GitOps overlays
 
+Зафиксированные target domains:
+
+- команда 1: `diplomverify.ru`
+- команда 2: `edu-proof.ru`
+
 В практическом плане это означает:
 
 - текущий compose-based rollout команды 1 является промежуточным

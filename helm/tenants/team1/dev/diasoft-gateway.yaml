@@ -1,26 +1,26 @@
 api:
   image:
-    repository: registry.gitlab.example.com/team1/diasoft-gateway/gateway-api
+    repository: registry.gitlab.com/ozzus/diasoft-gateway/gateway-api
     tag: latest
   ingress:
     enabled: true
-    host: verify.dev.team1.example.com
+    host: verify.dev.diplomverify.ru
     tls:
       enabled: true
       secretName: team1-dev-verify-tls
 
 consumer:
   image:
-    repository: registry.gitlab.example.com/team1/diasoft-gateway/gateway-consumer
+    repository: registry.gitlab.com/ozzus/diasoft-gateway/gateway-consumer
     tag: latest
 
 replayer:
   image:
-    repository: registry.gitlab.example.com/team1/diasoft-gateway/gateway-dlq-replayer
+    repository: registry.gitlab.com/ozzus/diasoft-gateway/gateway-dlq-replayer
     tag: latest
 
 env:
-  HTTP_ALLOWED_ORIGINS: https://web.dev.team1.example.com
+  HTTP_ALLOWED_ORIGINS: https://web.dev.diplomverify.ru
   HTTP_TRUSTED_PROXIES: 10.42.0.0/16,10.43.0.0/16,127.0.0.1/32
   KAFKA_SASL_ENABLED: "false"
   KAFKA_TLS_ENABLED: "false"

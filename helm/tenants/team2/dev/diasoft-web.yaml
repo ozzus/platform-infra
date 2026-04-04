@@ -1,19 +1,19 @@
 image:
-  repository: registry.gitlab.example.com/team2/diasoft-web/web
+  repository: registry.gitlab.com/ozzus/diasoft-web/diasoft-web
   tag: latest
 
 runtimeConfig:
   VITE_AUTH_ENABLED: "true"
-  VITE_OIDC_AUTHORITY: https://auth.dev.team2.example.org/realms/diasoft-team2
+  VITE_OIDC_AUTHORITY: https://auth.dev.edu-proof.ru/realms/diasoft-team2
   VITE_OIDC_CLIENT_ID: diasoft-web-team2
-  VITE_OIDC_REDIRECT_URI: https://web.dev.team2.example.org/
-  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.dev.team2.example.org/
-  VITE_GATEWAY_BASE_URL: https://verify.dev.team2.example.org
-  VITE_REGISTRY_BASE_URL: https://registry.dev.team2.example.org
+  VITE_OIDC_REDIRECT_URI: https://web.dev.edu-proof.ru/
+  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.dev.edu-proof.ru/
+  VITE_GATEWAY_BASE_URL: https://verify.dev.edu-proof.ru
+  VITE_REGISTRY_BASE_URL: https://registry.dev.edu-proof.ru
 
 ingress:
   enabled: true
-  host: web.dev.team2.example.org
+  host: web.dev.edu-proof.ru
   tls:
     enabled: true
     secretName: team2-dev-web-tls

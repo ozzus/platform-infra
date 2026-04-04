@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Team 2 isolated project for one-server multi-tenant deployment.
   sourceRepos:
-    - https://gitlab.example.com/platform-infra.git
+    - https://gitlab.com/ozzus/platform-infra.git
   destinations:
     - namespace: team2-*
       server: https://kubernetes.default.svc

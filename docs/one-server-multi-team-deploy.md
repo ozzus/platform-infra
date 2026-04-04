@@ -19,6 +19,11 @@ This document describes the target bootstrap path for a single public host that 
   - its own app and auth namespaces
   - its own pre-created Kubernetes secrets
 
+Selected root domains:
+
+- `team1` -> `diplomverify.ru`
+- `team2` -> `edu-proof.ru`
+
 ## Bootstrap order
 
 1. Prepare the server and install base packages with `scripts/bootstrap-host.sh`.

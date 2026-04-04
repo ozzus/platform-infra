@@ -6,7 +6,7 @@ admin:
 
 ingress:
   enabled: true
-  host: auth.dev.team2.example.org
+  host: auth.dev.edu-proof.ru
   tls:
     enabled: true
     secretName: team2-dev-auth-tls
@@ -15,14 +15,14 @@ realm:
   name: diasoft-team2
   frontendClientId: diasoft-web-team2
   redirectUris:
-    - https://web.dev.team2.example.org/*
-    - https://web.team2.example.org/*
+    - https://web.dev.edu-proof.ru/*
+    - https://web.edu-proof.ru/*
   postLogoutRedirectUris:
-    - https://web.dev.team2.example.org/*
-    - https://web.team2.example.org/*
+    - https://web.dev.edu-proof.ru/*
+    - https://web.edu-proof.ru/*
   bootstrapUsers:
     - username: super_admin
-      email: super-admin@team2.example.org
+      email: super-admin@edu-proof.ru
       firstName: Team
       lastName: Two
       passwordSecretKey: password
