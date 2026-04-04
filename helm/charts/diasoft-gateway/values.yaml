@@ -1,0 +1,145 @@
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: false
+
+api:
+  image:
+    repository: registry.example.com/diasoft-gateway/gateway-api
+    tag: latest
+  replicas: 2
+  service:
+    port: 8080
+    metricsPort: 8080
+  startupProbe:
+    enabled: true
+    path: /healthz
+    failureThreshold: 30
+    periodSeconds: 10
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+  ingress:
+    enabled: false
+    className: nginx
+    host: verify.dev.example.com
+    tls:
+      enabled: false
+      secretName: ""
+
+consumer:
+  image:
+    repository: registry.example.com/diasoft-gateway/gateway-consumer
+    tag: latest
+  replicas: 1
+  service:
+    metricsPort: 8081
+  startupProbe:
+    enabled: true
+    path: /healthz
+    failureThreshold: 30
+    periodSeconds: 10
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 6
+
+env:
+  HTTP_ALLOWED_ORIGINS: http://localhost:5173
+  HTTP_TRUSTED_PROXIES: 10.0.0.0/8,127.0.0.1/32
+  KAFKA_SASL_ENABLED: "true"
+  KAFKA_SASL_MECHANISM: SCRAM-SHA-512
+  KAFKA_TLS_ENABLED: "false"
+  TRACING_ENABLED: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+
+secretEnv:
+  KAFKA_BROKERS: kafka_brokers
+  KAFKA_USERNAME: kafka_username
+  KAFKA_PASSWORD: kafka_password
+  DATABASE_URL: database_url
+  REDIS_ADDR: redis_addr
+  REDIS_PASSWORD: redis_password
+
+externalSecret:
+  enabled: true
+  refreshInterval: 1h
+  secretStoreRef:
+    name: yandex-lockbox
+    kind: ClusterSecretStore
+  targetName: diasoft-gateway-secrets
+  data:
+    - secretKey: kafka_brokers
+      remoteRef:
+        key: diasoft-gateway
+        property: kafka_brokers
+    - secretKey: kafka_username
+      remoteRef:
+        key: diasoft-gateway
+        property: kafka_username
+    - secretKey: kafka_password
+      remoteRef:
+        key: diasoft-gateway
+        property: kafka_password
+    - secretKey: database_url
+      remoteRef:
+        key: diasoft-gateway
+        property: database_url
+    - secretKey: redis_addr
+      remoteRef:
+        key: diasoft-gateway
+        property: redis_addr
+    - secretKey: redis_password
+      remoteRef:
+        key: diasoft-gateway
+        property: redis_password
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+replayer:
+  image:
+    repository: registry.example.com/diasoft-gateway/gateway-dlq-replayer
+    tag: latest
+  replicas: 0
+  service:
+    metricsPort: 8082
+  startupProbe:
+    enabled: true
+    path: /healthz
+    failureThreshold: 30
+    periodSeconds: 10
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+networkPolicy:
+  enabled: true
+  apiIngressPort: 8080
+  egressPorts:
+    - 53
+    - 443
+    - 5432
+    - 6379
+    - 9092
