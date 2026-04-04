@@ -1,0 +1,31 @@
+{{- if .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: diasoft-gateway-api
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app: diasoft-gateway-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: diasoft-gateway-consumer
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: diasoft-gateway-consumer
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: diasoft-gateway-dlq-replayer
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: diasoft-gateway-dlq-replayer
+{{- end }}
