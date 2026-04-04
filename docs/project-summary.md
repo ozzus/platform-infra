@@ -15,6 +15,25 @@ Architectural constraints remain fixed:
 - public verification goes only through `diasoft-gateway`
 - target runtime is production-grade: Kubernetes, PostgreSQL, Redis, Kafka, GitOps, CI/CD, OIDC, and observability
 
+## Chosen verification strategy
+
+The selected production-shaped trust model is:
+
+- signed QR payload for authenticity
+- online status lookup for revocation and current state
+
+Why this is the preferred direction:
+
+- authenticity should be proven cryptographically through a university signature
+- current diploma status should be resolved through one indexed lookup by a stable diploma identifier
+- the platform should avoid any verification model that resembles a full scan over millions of records
+
+Current live note:
+
+- the current team 1 live demo still uses a projected read-model lookup path in `diasoft-gateway`
+- this is the present pragmatic runtime contour, not the final trust model
+- the chosen production direction is explicitly `signed QR + online status check`
+
 ## Repository state by area
 
 ### `diasoft-gateway`
@@ -34,6 +53,7 @@ Main remaining gaps:
 
 - prove live runtime against managed Kafka/Redis/PostgreSQL in nonprod
 - finish infra-side alerting and rollout rehearsal
+- evolve public verify from read-model-only lookup into the selected signed-QR plus status-check trust path
 
 ### `diasoft-registry`
 
