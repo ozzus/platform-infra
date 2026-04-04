@@ -1,0 +1,16 @@
+image:
+  tag: dev
+ingress:
+  enabled: true
+  host: web.dev.example.com
+  tls:
+    enabled: true
+    secretName: web-dev-tls
+runtimeConfig:
+  VITE_AUTH_ENABLED: "true"
+  VITE_OIDC_AUTHORITY: https://auth.dev.example.com/realms/diasoft
+  VITE_OIDC_CLIENT_ID: diasoft-web
+  VITE_OIDC_REDIRECT_URI: https://web.dev.example.com/
+  VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.dev.example.com/
+  VITE_GATEWAY_BASE_URL: https://verify.dev.example.com
+  VITE_REGISTRY_BASE_URL: https://registry.dev.example.com
