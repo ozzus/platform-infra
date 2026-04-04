@@ -1,0 +1,104 @@
+{
+  "realm": "diasoft",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      { "name": "super_admin" },
+      { "name": "university_admin" },
+      { "name": "university_operator" },
+      { "name": "student" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "diasoft-web",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:8082/*"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      },
+      "defaultClientScopes": ["profile", "email", "roles"],
+      "protocolMappers": [
+        {
+          "name": "university_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "university_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "university_id",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "student_external_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "student_external_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "student_external_id",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "super_admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ChangeMe123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["super_admin"]
+    },
+    {
+      "username": "university_operator_itmo",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": {
+        "university_id": ["11111111-1111-1111-1111-111111111111"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ChangeMe123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["university_operator"]
+    },
+    {
+      "username": "student_001",
+      "enabled": true,
+      "emailVerified": true,
+      "attributes": {
+        "student_external_id": ["student-001"]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ChangeMe123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["student"]
+    }
+  ]
+}
