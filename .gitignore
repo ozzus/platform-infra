@@ -1,0 +1,7 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+local/.env
+docs/context.md
+docs/runbooks/dlq-replay.md

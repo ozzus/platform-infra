@@ -1,0 +1,135 @@
+stages:
+  - validate
+  - plan
+  - smoke
+
+terraform_validate:
+  stage: validate
+  image: hashicorp/terraform:1.9.8
+  script:
+    - cd terraform/yandex/envs/nonprod
+    - terraform init -backend=false
+    - terraform validate
+
+terraform_validate_prod:
+  stage: validate
+  image: hashicorp/terraform:1.9.8
+  script:
+    - cd terraform/yandex/envs/prod
+    - terraform init -backend=false
+    - terraform validate
+
+terraform_plan_nonprod:
+  stage: plan
+  image: hashicorp/terraform:1.9.8
+  rules:
+    - if: '$YC_IAM_TOKEN || $YC_OAUTH_TOKEN || $YC_SERVICE_ACCOUNT_KEY_FILE'
+  script:
+    - cd terraform/yandex/envs/nonprod
+    - terraform init -backend=false
+    - terraform plan -lock=false -input=false
+
+terraform_plan_prod:
+  stage: plan
+  image: hashicorp/terraform:1.9.8
+  rules:
+    - if: '$YC_IAM_TOKEN || $YC_OAUTH_TOKEN || $YC_SERVICE_ACCOUNT_KEY_FILE'
+  script:
+    - cd terraform/yandex/envs/prod
+    - terraform init -backend=false
+    - terraform plan -lock=false -input=false
+
+helm_lint:
+  stage: validate
+  image: alpine/helm:3.16.2
+  script:
+    - helm lint helm/charts/diasoft-gateway -f helm/environments/dev/diasoft-gateway.yaml
+    - helm lint helm/charts/diasoft-gateway -f helm/environments/stage/diasoft-gateway.yaml
+    - helm lint helm/charts/diasoft-gateway -f helm/environments/prod/diasoft-gateway.yaml
+    - helm lint helm/charts/diasoft-registry -f helm/environments/dev/diasoft-registry.yaml
+    - helm lint helm/charts/diasoft-registry -f helm/environments/stage/diasoft-registry.yaml
+    - helm lint helm/charts/diasoft-registry -f helm/environments/prod/diasoft-registry.yaml
+    - helm lint helm/charts/diasoft-web -f helm/environments/dev/diasoft-web.yaml
+    - helm lint helm/charts/diasoft-web -f helm/environments/stage/diasoft-web.yaml
+    - helm lint helm/charts/diasoft-web -f helm/environments/prod/diasoft-web.yaml
+    - helm lint helm/charts/keycloak -f helm/environments/dev/keycloak.yaml
+    - helm lint helm/charts/keycloak -f helm/environments/stage/keycloak.yaml
+    - helm lint helm/charts/keycloak -f helm/environments/prod/keycloak.yaml
+
+helm_template:
+  stage: validate
+  image: alpine/helm:3.16.2
+  script:
+    - helm template diasoft-gateway helm/charts/diasoft-gateway -f helm/environments/dev/diasoft-gateway.yaml >/tmp/gateway-dev.yaml
+    - helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/dev/diasoft-registry.yaml >/tmp/registry-dev.yaml
+    - helm template diasoft-web helm/charts/diasoft-web -f helm/environments/dev/diasoft-web.yaml >/tmp/web-dev.yaml
+    - helm template keycloak helm/charts/keycloak -f helm/environments/dev/keycloak.yaml >/tmp/keycloak-dev.yaml
+    - helm template diasoft-gateway helm/charts/diasoft-gateway -f helm/environments/stage/diasoft-gateway.yaml >/tmp/gateway-stage.yaml
+    - helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/stage/diasoft-registry.yaml >/tmp/registry-stage.yaml
+    - helm template diasoft-web helm/charts/diasoft-web -f helm/environments/stage/diasoft-web.yaml >/tmp/web-stage.yaml
+    - helm template keycloak helm/charts/keycloak -f helm/environments/stage/keycloak.yaml >/tmp/keycloak-stage.yaml
+    - helm template diasoft-gateway helm/charts/diasoft-gateway -f helm/environments/prod/diasoft-gateway.yaml >/tmp/gateway-prod.yaml
+    - helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/prod/diasoft-registry.yaml >/tmp/registry-prod.yaml
+    - helm template diasoft-web helm/charts/diasoft-web -f helm/environments/prod/diasoft-web.yaml >/tmp/web-prod.yaml
+    - helm template keycloak helm/charts/keycloak -f helm/environments/prod/keycloak.yaml >/tmp/keycloak-prod.yaml
+
+argocd_validate:
+  stage: validate
+  image: mikefarah/yq:4
+  script:
+    - for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.kind' "$file")" = "Application" ] || exit 1; done
+    - for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.spec.destination.namespace' "$file")" != "null" ] || exit 1; done
+    - for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.spec.source.path // .spec.source.chart // .spec.sources[0].path // .spec.sources[0].chart' "$file")" != "null" ] || exit 1; done
+    - for file in $(find argocd/apps -name '*.yaml' | sort); do yq -r '.spec.sources[]?.helm.valueFiles[]? // ""' "$file" | while read -r value_file; do [ -z "$value_file" ] && continue; path=${value_file#\$values/}; [ -f "$path" ] || exit 1; done; done
+    - for file in $(find argocd/manifests -name '*.yaml' | sort); do [ "$(yq '.apiVersion' "$file")" != "null" ] || exit 1; done
+
+values_policy_validate:
+  stage: validate
+  image: alpine:3.21
+  script:
+    - "! grep -R -n -E 'SPRING_DATASOURCE_PASSWORD:|OBJECT_STORAGE_SECRET_KEY:|KC_DB_PASSWORD:|password: admin' helm/environments/stage helm/environments/prod"
+    - "! grep -R -n -E 'ChangeMe123!' helm/environments/prod"
+    - "! grep -R -n -E 'bootstrapUsers:' helm/environments/prod"
+    - "! grep -R -n -E 'mode: dev' helm/environments/stage helm/environments/prod"
+    - "! grep -R -n -E 'existingSecret: \"\"' helm/environments/stage helm/environments/prod helm/addons/prod"
+
+bootstrap_docs_validate:
+  stage: validate
+  image: alpine:3.21
+  script:
+    - test -f docs/bootstrap-secrets.md
+    - test -f docs/cutover-checklist.md
+    - test -f docs/runbooks/rollback.md
+    - test -f docs/runbooks/database-restore.md
+    - test -f docs/runbooks/keycloak-outage.md
+    - test -f docs/runbooks/kafka-lag.md
+    - test -f docs/runbooks/import-backlog.md
+    - test -f docs/runbooks/dlq-replay.md
+    - test -f docs/runbooks/alert-delivery-smoke.md
+    - test -f docs/runbooks/stage-rehearsal.md
+
+live_smoke_nonprod:
+  stage: smoke
+  image: alpine:3.21
+  rules:
+    - if: '$NONPROD_DEV_WEB_URL && $NONPROD_DEV_REGISTRY_URL && $NONPROD_DEV_VERIFY_URL && $NONPROD_DEV_AUTH_URL'
+      when: manual
+  script:
+    - apk add --no-cache curl
+    - curl -fsS "$NONPROD_DEV_AUTH_URL/realms/diasoft/.well-known/openid-configuration" >/dev/null
+    - curl -fsS "$NONPROD_DEV_REGISTRY_URL/actuator/health" >/dev/null
+    - curl -fsS "$NONPROD_DEV_VERIFY_URL/healthz" >/dev/null
+    - curl -fsS "$NONPROD_DEV_WEB_URL" >/dev/null
+
+live_smoke_stage:
+  stage: smoke
+  image: alpine:3.21
+  rules:
+    - if: '$STAGE_WEB_URL && $STAGE_REGISTRY_URL && $STAGE_VERIFY_URL && $STAGE_AUTH_URL'
+      when: manual
+  script:
+    - apk add --no-cache curl
+    - curl -fsS "$STAGE_AUTH_URL/realms/diasoft/.well-known/openid-configuration" >/dev/null
+    - curl -fsS "$STAGE_REGISTRY_URL/actuator/health" >/dev/null
+    - curl -fsS "$STAGE_VERIFY_URL/healthz" >/dev/null
+    - curl -fsS "$STAGE_WEB_URL" >/dev/null
