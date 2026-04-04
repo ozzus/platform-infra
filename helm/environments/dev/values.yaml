@@ -1,0 +1,60 @@
+gateway:
+  image:
+    tag: dev
+  api:
+    ingress:
+      enabled: true
+      host: verify.dev.example.com
+      tls:
+        enabled: true
+        secretName: verify-dev-tls
+  env:
+    HTTP_ALLOWED_ORIGINS: https://web.dev.example.com,http://localhost:5173
+    HTTP_TRUSTED_PROXIES: 10.0.0.0/8,127.0.0.1/32
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+registry:
+  image:
+    tag: dev
+  ingress:
+    enabled: true
+    host: registry.dev.example.com
+    tls:
+      enabled: true
+      secretName: registry-dev-tls
+  env:
+    OIDC_ISSUER_URI: https://auth.dev.example.com/realms/diasoft
+    APP_ALLOWED_ORIGINS: https://web.dev.example.com,http://localhost:5173
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+web:
+  image:
+    tag: dev
+  ingress:
+    enabled: true
+    host: web.dev.example.com
+    tls:
+      enabled: true
+      secretName: web-dev-tls
+  runtimeConfig:
+    VITE_AUTH_ENABLED: "true"
+    VITE_OIDC_AUTHORITY: https://auth.dev.example.com/realms/diasoft
+    VITE_OIDC_CLIENT_ID: diasoft-web
+    VITE_OIDC_REDIRECT_URI: https://web.dev.example.com/
+    VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.dev.example.com/
+    VITE_GATEWAY_BASE_URL: https://verify.dev.example.com
+    VITE_REGISTRY_BASE_URL: https://registry.dev.example.com
+keycloak:
+  ingress:
+    enabled: true
+    host: auth.dev.example.com
+    tls:
+      enabled: true
+      secretName: auth-dev-tls
+  admin:
+    existingSecret: keycloak-admin
+  realm:
+    redirectUris:
+      - http://localhost:5173/*
+      - https://web.dev.example.com/*
+    postLogoutRedirectUris:
+      - http://localhost:5173/*
+      - https://web.dev.example.com/*
