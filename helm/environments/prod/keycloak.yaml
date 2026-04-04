@@ -1,0 +1,45 @@
+mode: production
+replicas: 2
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+ingress:
+  enabled: true
+  host: auth.example.com
+  tls:
+    enabled: true
+    secretName: auth-prod-tls
+realm:
+  redirectUris:
+    - https://web.example.com/*
+  postLogoutRedirectUris:
+    - https://web.example.com/*
+  bootstrapUsers: []
+externalSecret:
+  targetName: keycloak-prod-secrets
+  data:
+    - secretKey: username
+      remoteRef:
+        key: keycloak-admin-prod
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: keycloak-admin-prod
+        property: password
+    - secretKey: db_host
+      remoteRef:
+        key: keycloak-prod
+        property: db_host
+    - secretKey: db_port
+      remoteRef:
+        key: keycloak-prod
+        property: db_port
+    - secretKey: db_username
+      remoteRef:
+        key: keycloak-prod
+        property: db_username
+    - secretKey: db_password
+      remoteRef:
+        key: keycloak-prod
+        property: db_password
