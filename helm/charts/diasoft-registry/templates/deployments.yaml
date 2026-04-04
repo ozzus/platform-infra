@@ -1,0 +1,182 @@
+{{- if .Values.components.api.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diasoft-registry-api
+spec:
+  replicas: {{ .Values.components.api.replicas }}
+  selector:
+    matchLabels:
+      app: diasoft-registry
+      component: api
+  template:
+    metadata:
+      labels:
+        app: diasoft-registry
+        component: api
+    spec:
+      serviceAccountName: {{ default "diasoft-registry" .Values.serviceAccount.name }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+        - name: registry-api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_RUNTIME_MODE
+              value: {{ .Values.app.runtimeModes.api | quote }}
+            - name: APP_SECURITY_ENABLED
+              value: {{ .Values.app.securityEnabled | quote }}
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.externalSecret.targetName | quote }}
+                  key: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: {{ .Values.service.port }}
+          {{- if .Values.components.api.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.components.api.startupProbe.path }}
+              port: {{ .Values.service.port }}
+            failureThreshold: {{ .Values.components.api.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.components.api.startupProbe.periodSeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.api | nindent 12 }}
+---
+{{- end }}
+{{- if .Values.components.importWorker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diasoft-registry-import-worker
+spec:
+  replicas: {{ .Values.components.importWorker.replicas }}
+  selector:
+    matchLabels:
+      app: diasoft-registry
+      component: import-worker
+  template:
+    metadata:
+      labels:
+        app: diasoft-registry
+        component: import-worker
+    spec:
+      serviceAccountName: {{ default "diasoft-registry" .Values.serviceAccount.name }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+        - name: registry-import-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_RUNTIME_MODE
+              value: {{ .Values.app.runtimeModes.importWorker | quote }}
+            - name: APP_SECURITY_ENABLED
+              value: {{ .Values.app.securityEnabled | quote }}
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.externalSecret.targetName | quote }}
+                  key: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: {{ .Values.service.port }}
+          {{- if .Values.components.importWorker.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.components.importWorker.startupProbe.path }}
+              port: {{ .Values.service.port }}
+            failureThreshold: {{ .Values.components.importWorker.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.components.importWorker.startupProbe.periodSeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.worker | nindent 12 }}
+---
+{{- end }}
+{{- if .Values.components.outboxPublisher.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diasoft-registry-outbox-publisher
+spec:
+  replicas: {{ .Values.components.outboxPublisher.replicas }}
+  selector:
+    matchLabels:
+      app: diasoft-registry
+      component: outbox-publisher
+  template:
+    metadata:
+      labels:
+        app: diasoft-registry
+        component: outbox-publisher
+    spec:
+      serviceAccountName: {{ default "diasoft-registry" .Values.serviceAccount.name }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+        - name: registry-outbox-publisher
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_RUNTIME_MODE
+              value: {{ .Values.app.runtimeModes.outboxPublisher | quote }}
+            - name: APP_SECURITY_ENABLED
+              value: "false"
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.externalSecret.targetName | quote }}
+                  key: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: {{ .Values.service.port }}
+          {{- if .Values.components.outboxPublisher.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.components.outboxPublisher.startupProbe.path }}
+              port: {{ .Values.service.port }}
+            failureThreshold: {{ .Values.components.outboxPublisher.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.components.outboxPublisher.startupProbe.periodSeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.worker | nindent 12 }}
+{{- end }}
