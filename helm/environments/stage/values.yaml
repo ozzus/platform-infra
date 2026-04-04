@@ -1,0 +1,57 @@
+gateway:
+  image:
+    tag: stage
+  api:
+    ingress:
+      enabled: true
+      host: verify.stage.example.com
+      tls:
+        enabled: true
+        secretName: verify-stage-tls
+  env:
+    HTTP_ALLOWED_ORIGINS: https://web.stage.example.com
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+registry:
+  image:
+    tag: stage
+  ingress:
+    enabled: true
+    host: registry.stage.example.com
+    tls:
+      enabled: true
+      secretName: registry-stage-tls
+  env:
+    OIDC_ISSUER_URI: https://auth.stage.example.com/realms/diasoft
+    APP_ALLOWED_ORIGINS: https://web.stage.example.com
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo.monitoring.svc.cluster.local:4317
+web:
+  image:
+    tag: stage
+  ingress:
+    enabled: true
+    host: web.stage.example.com
+    tls:
+      enabled: true
+      secretName: web-stage-tls
+  runtimeConfig:
+    VITE_AUTH_ENABLED: "true"
+    VITE_OIDC_AUTHORITY: https://auth.stage.example.com/realms/diasoft
+    VITE_OIDC_CLIENT_ID: diasoft-web
+    VITE_OIDC_REDIRECT_URI: https://web.stage.example.com/
+    VITE_OIDC_POST_LOGOUT_REDIRECT_URI: https://web.stage.example.com/
+    VITE_GATEWAY_BASE_URL: https://verify.stage.example.com
+    VITE_REGISTRY_BASE_URL: https://registry.stage.example.com
+keycloak:
+  ingress:
+    enabled: true
+    host: auth.stage.example.com
+    tls:
+      enabled: true
+      secretName: auth-stage-tls
+  admin:
+    existingSecret: keycloak-admin
+  realm:
+    redirectUris:
+      - https://web.stage.example.com/*
+    postLogoutRedirectUris:
+      - https://web.stage.example.com/*
