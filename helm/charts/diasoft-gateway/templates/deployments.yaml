@@ -1,0 +1,155 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diasoft-gateway-api
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: diasoft-gateway-api
+  template:
+    metadata:
+      labels:
+        app: diasoft-gateway-api
+    spec:
+      serviceAccountName: {{ default "diasoft-gateway" .Values.serviceAccount.name }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+        - name: gateway-api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.externalSecret.targetName | quote }}
+                  key: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.api.service.port }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.api.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.service.port }}
+          {{- if .Values.api.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.api.startupProbe.path }}
+              port: {{ .Values.api.service.port }}
+            failureThreshold: {{ .Values.api.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.api.startupProbe.periodSeconds }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.api.resources | indent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diasoft-gateway-consumer
+spec:
+  replicas: {{ .Values.consumer.replicas }}
+  selector:
+    matchLabels:
+      app: diasoft-gateway-consumer
+  template:
+    metadata:
+      labels:
+        app: diasoft-gateway-consumer
+    spec:
+      serviceAccountName: {{ default "diasoft-gateway" .Values.serviceAccount.name }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+        - name: gateway-consumer
+          image: "{{ .Values.consumer.image.repository }}:{{ .Values.consumer.image.tag }}"
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.externalSecret.targetName | quote }}
+                  key: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.consumer.service.metricsPort }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.consumer.service.metricsPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.consumer.service.metricsPort }}
+          {{- if .Values.consumer.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.consumer.startupProbe.path }}
+              port: {{ .Values.consumer.service.metricsPort }}
+            failureThreshold: {{ .Values.consumer.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.consumer.startupProbe.periodSeconds }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.consumer.resources | indent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diasoft-gateway-dlq-replayer
+spec:
+  replicas: {{ .Values.replayer.replicas }}
+  selector:
+    matchLabels:
+      app: diasoft-gateway-dlq-replayer
+  template:
+    metadata:
+      labels:
+        app: diasoft-gateway-dlq-replayer
+    spec:
+      serviceAccountName: {{ default "diasoft-gateway" .Values.serviceAccount.name }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      containers:
+        - name: gateway-dlq-replayer
+          image: "{{ .Values.replayer.image.repository }}:{{ .Values.replayer.image.tag }}"
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.externalSecret.targetName | quote }}
+                  key: {{ $value | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.replayer.service.metricsPort }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.replayer.service.metricsPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.replayer.service.metricsPort }}
+          {{- if .Values.replayer.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.replayer.startupProbe.path }}
+              port: {{ .Values.replayer.service.metricsPort }}
+            failureThreshold: {{ .Values.replayer.startupProbe.failureThreshold }}
+            periodSeconds: {{ .Values.replayer.startupProbe.periodSeconds }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.replayer.resources | indent 12 }}
