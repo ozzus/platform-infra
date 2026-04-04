@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: diasoft-platform-alerts
+  namespace: monitoring
+spec:
+  groups:
+    - name: diasoft-platform
+      rules:
+        - alert: DiasoftRegistryOutboxBacklog
+          expr: diasoft_registry_outbox_backlog > 100
+          for: 10m
+          labels:
+            severity: warning
+            service: diasoft-registry
+          annotations:
+            summary: Registry outbox backlog is above threshold
+        - alert: DiasoftRegistryOutboxPublishFailures
+          expr: increase(diasoft_registry_outbox_publish_failure_total[10m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            service: diasoft-registry
+          annotations:
+            summary: Registry outbox publisher is failing
+        - alert: DiasoftGatewayKafkaFailures
+          expr: increase(gateway_kafka_events_total{status=~"failed|dlq_failed"}[10m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            service: diasoft-gateway
+          annotations:
+            summary: Gateway Kafka processing failures detected
