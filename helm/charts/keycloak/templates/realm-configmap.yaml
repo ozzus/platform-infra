@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-import
+data:
+  diasoft-realm.json: |
+    {
+      "realm": {{ .Values.realm.name | quote }},
+      "enabled": true,
+      "roles": {
+        "realm": [
+          { "name": "super_admin" },
+          { "name": "university_admin" },
+          { "name": "university_operator" },
+          { "name": "student" }
+        ]
+      },
+      "clients": [
+        {
+          "clientId": {{ .Values.realm.frontendClientId | quote }},
+          "publicClient": true,
+          "protocol": "openid-connect",
+          "redirectUris": {{ toJson .Values.realm.redirectUris }},
+          "attributes": {
+            "post.logout.redirect.uris": "+"
+          },
+          "defaultClientScopes": ["profile", "email", "roles"],
+          "protocolMappers": [
+            {
+              "name": "university_id",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "university_id",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "university_id",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "student_external_id",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "student_external_id",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "student_external_id",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        }
+      ],
+      "users": {{ toJson .Values.realm.bootstrapUsers }}
+    }
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}
