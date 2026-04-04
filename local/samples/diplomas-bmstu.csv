@@ -1,4 +1,4 @@
-student_external_id,full_name,diploma_number,program_name
-bmstu-student-001,Смирнов Алексей Павлович,B-2026-1001,Robotics
-bmstu-student-002,Кузнецова Мария Ильинична,B-2026-1002,Aerospace Engineering
-bmstu-student-003,Федоров Никита Сергеевич,B-2026-1003,Industrial Design
+student_external_id,full_name,diploma_number,program_name,graduation_year
+bmstu-student-001,Смирнов Алексей Павлович,B-2026-1001,Robotics,2026
+bmstu-student-002,Кузнецова Мария Ильинична,B-2026-1002,Aerospace Engineering,2026
+bmstu-student-003,Федоров Никита Сергеевич,B-2026-1003,Industrial Design,2026

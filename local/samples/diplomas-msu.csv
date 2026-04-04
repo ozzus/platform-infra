@@ -1,4 +1,4 @@
-student_external_id,full_name,diploma_number,program_name
-msu-student-001,Орлова Елена Викторовна,M-2026-2001,Physics
-msu-student-002,Громов Артем Валерьевич,M-2026-2002,Applied Mathematics
-msu-student-003,Беляева София Андреевна,M-2026-2003,Chemistry
+student_external_id,full_name,diploma_number,program_name,graduation_year
+msu-student-001,Орлова Елена Викторовна,M-2026-2001,Physics,2026
+msu-student-002,Громов Артем Валерьевич,M-2026-2002,Applied Mathematics,2026
+msu-student-003,Беляева София Андреевна,M-2026-2003,Chemistry,2026

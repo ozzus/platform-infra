@@ -1,4 +1,4 @@
-student_external_id,full_name,diploma_number,program_name
-student-001,Ivan Petrov,D-2026-0001,Computer Science
-student-002,Anna Smirnova,D-2026-0002,Software Engineering
-student-003,Pavel Ivanov,D-2026-0003,Applied Informatics
+student_external_id,full_name,diploma_number,program_name,graduation_year
+student-001,Ivan Petrov,D-2026-0001,Computer Science,2026
+student-002,Anna Smirnova,D-2026-0002,Software Engineering,2026
+student-003,Pavel Ivanov,D-2026-0003,Applied Informatics,2026
