@@ -36,6 +36,9 @@ services:
       REGISTRY_SERVICE_TOKEN: diasoft-service-token
 
   web:
+    build:
+      args:
+        VITE_GATEWAY_BASE_URL: https://verify.team1.213.165.211.103.sslip.io
     environment:
       VITE_AUTH_ENABLED: "false"
       VITE_GATEWAY_BASE_URL: https://verify.diplomverify.ru
