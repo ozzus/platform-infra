@@ -145,6 +145,12 @@ To start the first live `k3s + Caddy + ArgoCD` deployment, the following must ex
 - resolved root domains for both teams
 - bootstrap secret values for tenant PostgreSQL, Kafka, Redis, object storage, and Keycloak
 
+Additional hard blockers confirmed by live checks:
+
+- the GitLab account/project owner must complete GitLab identity verification before CI jobs can run
+- after that, at least one baseline pipeline must be executed successfully on each imported repository
+- `k3s` bootstrap still has to start from zero because there is no existing cluster on the public host
+
 Current chosen root domains:
 
 - `team1`: `diplomverify.ru`
@@ -155,6 +161,19 @@ Current DNS status for `team1`:
 - target public domains are reserved and wired in tenant overlays
 - current external DNS answers for `web/verify/registry/auth.diplomverify.ru` still point to placeholder `198.18.0.x` addresses, not to `213.165.211.103`
 - because of that, the validated live fallback remains the `sslip.io` host set until DNS is corrected
+
+Current Kubernetes and GitLab status from live checks on April 5, 2026:
+
+- `k3s` is not installed on the public server yet
+- `k3s.service` does not exist, so the target Kubernetes runtime is currently absent rather than merely degraded
+- GitLab project import from GitHub is finished for all four repositories
+- GitLab API is reachable and projects are visible
+- no imported project has any pipeline runs yet
+- direct pipeline creation through the GitLab API currently fails with:
+  - `Identity verification is required in order to run CI jobs`
+- practical consequence:
+  - GitLab repository hosting works
+  - GitLab CI/CD is not operational yet
 
 ## Production-ready assessment
 

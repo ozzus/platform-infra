@@ -55,6 +55,8 @@
 - Swagger UI is switched to self-hosted assets so it no longer depends on `unpkg.com`
 - external DNS for `diplomverify.ru` still resolves to non-server placeholder IPs instead of `213.165.211.103`
 - until DNS is corrected, the only externally validated URLs remain the `sslip.io` fallback hosts
+- live check on April 5, 2026 showed that `k3s` is not installed on the public server at all
+- live check on April 5, 2026 also showed that GitLab repositories are imported, but CI jobs are blocked by GitLab identity verification and no pipeline has run yet
 
 ## Что означает кейс со стороны заказчика
 
