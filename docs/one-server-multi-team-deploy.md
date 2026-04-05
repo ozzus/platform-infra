@@ -37,21 +37,23 @@ Selected root domains:
 
 ## CI/CD prerequisites
 
-Before this model can be used as the canonical deploy path, GitLab must provide:
+Before this model can be used as the canonical deploy path, GitHub must provide:
 
-- projects for `diasoft-gateway`, `diasoft-registry`, `diasoft-web`, and `platform-infra`
-- Container Registry and Generic Package Registry
-- one privileged `docker-build` runner for image builds and integration tests
-- one `infra-validate` runner with `terraform`, `helm`, `kubeconform`, and `yq`
+- repositories for `diasoft-gateway`, `diasoft-registry`, `diasoft-web`, and `platform-infra`
+- GitHub Actions enabled for all four repositories
+- GHCR package publishing for service images
 - protected `main` branches and manual production approvals
+- repository or organization secrets for cross-repo reads, `platform-infra` promotion, and live smoke
 
 Service repo promotion jobs expect these variables:
 
 - `PLATFORM_INFRA_REPO_URL`
 - `PLATFORM_INFRA_PUSH_URL`
 - `PLATFORM_INFRA_BASE_BRANCH`
-- `PLATFORM_INFRA_GITLAB_PROJECT_ID`
-- `PLATFORM_INFRA_GITLAB_TOKEN`
+- `PLATFORM_INFRA_GITHUB_REPO`
+- `PLATFORM_INFRA_GITHUB_TOKEN`
+- `CROSS_REPO_GITHUB_TOKEN`
+- `GHCR_TOKEN`
 
 Bootstrap and live smoke jobs expect:
 
@@ -65,5 +67,6 @@ Bootstrap and live smoke jobs expect:
 
 - For a single-host public deployment, use the `single-node` addon overlays.
 - For service promotion, `platform-infra` is the deploy source of truth.
+- Canonical CI/CD is now `GitHub Actions -> GHCR -> platform-infra -> ArgoCD`.
 - Team 1 service repos should update only the `helm/tenants/team1/*` overlays.
 - Team 2 can use the same deployment model with different images and root domains.

@@ -1,6 +1,6 @@
 api:
   image:
-    repository: registry.gitlab.com/ozzus/diasoft-gateway/gateway-api
+    repository: ghcr.io/ozzus/diasoft-gateway/gateway-api
     tag: latest
   ingress:
     enabled: true
@@ -11,12 +11,12 @@ api:
 
 consumer:
   image:
-    repository: registry.gitlab.com/ozzus/diasoft-gateway/gateway-consumer
+    repository: ghcr.io/ozzus/diasoft-gateway/gateway-consumer
     tag: latest
 
 replayer:
   image:
-    repository: registry.gitlab.com/ozzus/diasoft-gateway/gateway-dlq-replayer
+    repository: ghcr.io/ozzus/diasoft-gateway/gateway-dlq-replayer
     tag: latest
 
 env:

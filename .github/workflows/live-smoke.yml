@@ -1,0 +1,88 @@
+name: Platform Live Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which live environment to probe
+        required: true
+        default: team1
+        type: choice
+        options:
+          - nonprod
+          - stage
+          - team1
+          - team2
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install curl
+        run: sudo apt-get update && sudo apt-get install -y curl
+      - name: Resolve target URLs
+        id: urls
+        env:
+          TARGET: ${{ inputs.target }}
+          NONPROD_DEV_WEB_URL: ${{ secrets.NONPROD_DEV_WEB_URL }}
+          NONPROD_DEV_REGISTRY_URL: ${{ secrets.NONPROD_DEV_REGISTRY_URL }}
+          NONPROD_DEV_VERIFY_URL: ${{ secrets.NONPROD_DEV_VERIFY_URL }}
+          NONPROD_DEV_AUTH_URL: ${{ secrets.NONPROD_DEV_AUTH_URL }}
+          STAGE_WEB_URL: ${{ secrets.STAGE_WEB_URL }}
+          STAGE_REGISTRY_URL: ${{ secrets.STAGE_REGISTRY_URL }}
+          STAGE_VERIFY_URL: ${{ secrets.STAGE_VERIFY_URL }}
+          STAGE_AUTH_URL: ${{ secrets.STAGE_AUTH_URL }}
+          TEAM1_WEB_URL: ${{ secrets.TEAM1_WEB_URL }}
+          TEAM1_REGISTRY_URL: ${{ secrets.TEAM1_REGISTRY_URL }}
+          TEAM1_VERIFY_URL: ${{ secrets.TEAM1_VERIFY_URL }}
+          TEAM1_AUTH_URL: ${{ secrets.TEAM1_AUTH_URL }}
+          TEAM2_WEB_URL: ${{ secrets.TEAM2_WEB_URL }}
+          TEAM2_REGISTRY_URL: ${{ secrets.TEAM2_REGISTRY_URL }}
+          TEAM2_VERIFY_URL: ${{ secrets.TEAM2_VERIFY_URL }}
+          TEAM2_AUTH_URL: ${{ secrets.TEAM2_AUTH_URL }}
+        run: |
+          case "$TARGET" in
+            nonprod)
+              web_url="$NONPROD_DEV_WEB_URL"
+              registry_url="$NONPROD_DEV_REGISTRY_URL"
+              verify_url="$NONPROD_DEV_VERIFY_URL"
+              auth_url="$NONPROD_DEV_AUTH_URL/realms/diasoft/.well-known/openid-configuration"
+              ;;
+            stage)
+              web_url="$STAGE_WEB_URL"
+              registry_url="$STAGE_REGISTRY_URL"
+              verify_url="$STAGE_VERIFY_URL"
+              auth_url="$STAGE_AUTH_URL/realms/diasoft/.well-known/openid-configuration"
+              ;;
+            team1)
+              web_url="$TEAM1_WEB_URL"
+              registry_url="$TEAM1_REGISTRY_URL"
+              verify_url="$TEAM1_VERIFY_URL"
+              auth_url="$TEAM1_AUTH_URL/realms/diasoft-team1/.well-known/openid-configuration"
+              ;;
+            team2)
+              web_url="$TEAM2_WEB_URL"
+              registry_url="$TEAM2_REGISTRY_URL"
+              verify_url="$TEAM2_VERIFY_URL"
+              auth_url="$TEAM2_AUTH_URL/realms/diasoft-team2/.well-known/openid-configuration"
+              ;;
+            *)
+              echo "unsupported target: $TARGET" >&2
+              exit 1
+              ;;
+          esac
+          printf 'web_url=%s\n' "$web_url" >>"$GITHUB_OUTPUT"
+          printf 'registry_url=%s\n' "$registry_url" >>"$GITHUB_OUTPUT"
+          printf 'verify_url=%s\n' "$verify_url" >>"$GITHUB_OUTPUT"
+          printf 'auth_url=%s\n' "$auth_url" >>"$GITHUB_OUTPUT"
+      - run: test -n "${{ steps.urls.outputs.web_url }}"
+      - run: test -n "${{ steps.urls.outputs.registry_url }}"
+      - run: test -n "${{ steps.urls.outputs.verify_url }}"
+      - run: test -n "${{ steps.urls.outputs.auth_url }}"
+      - run: curl -fsS "${{ steps.urls.outputs.auth_url }}" >/dev/null
+      - run: curl -fsS "${{ steps.urls.outputs.registry_url }}/actuator/health" >/dev/null
+      - run: curl -fsS "${{ steps.urls.outputs.verify_url }}/healthz" >/dev/null
+      - run: curl -fsS "${{ steps.urls.outputs.web_url }}" >/dev/null

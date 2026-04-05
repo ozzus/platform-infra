@@ -115,11 +115,14 @@ Implemented:
 - cutover-oriented runbooks and checklist
 - explicit stage rehearsal runbook for pre-prod validation
 - local compose-based single-host stack for developer onboarding and smoke checks
+- GitHub Actions workflows for service repos and `platform-infra`
+- GHCR-oriented tenant overlays and chart defaults
+- GitHub-based Argo repo references for `platform-infra`
 
 Main remaining gaps:
 
 - live apply / sync / smoke validation on the target server
-- GitLab runners, mirrored projects, registry credentials, and bootstrap secrets still need real provisioning
+- GitHub repository secrets, GHCR permissions, and bootstrap secrets still need real provisioning
 - external-secrets and external-dns bootstrap secrets still need real environment provisioning
 - restore, rollback, and alert delivery must still be exercised in `stage`
 
@@ -127,16 +130,15 @@ Main remaining gaps:
 
 To start the first live `k3s + Caddy + ArgoCD` deployment, the following must exist first:
 
-- GitLab projects or mirrors for all four repositories
-- one privileged `docker-build` runner
-- one `infra-validate` runner with `terraform`, `helm`, `kubeconform`, and `yq`
-- GitLab variables for:
+- GitHub repositories for all four services and `platform-infra`
+- GitHub Actions enabled for the organization or repositories
+- GitHub secrets for:
   - `PLATFORM_INFRA_REPO_URL`
   - `PLATFORM_INFRA_PUSH_URL`
-  - `PLATFORM_INFRA_GITLAB_PROJECT_ID`
-  - `PLATFORM_INFRA_GITLAB_TOKEN`
-  - `CI_REGISTRY_USER`
-  - `CI_REGISTRY_PASSWORD`
+  - `PLATFORM_INFRA_GITHUB_REPO`
+  - `PLATFORM_INFRA_GITHUB_TOKEN`
+  - `CROSS_REPO_GITHUB_TOKEN`
+  - `GHCR_TOKEN`
   - `TEAM1_BASE_DOMAIN`
   - `TEAM2_BASE_DOMAIN`
   - `SERVER_PUBLIC_IP`
@@ -147,9 +149,9 @@ To start the first live `k3s + Caddy + ArgoCD` deployment, the following must ex
 
 Additional hard blockers confirmed by live checks:
 
-- the GitLab account/project owner must complete GitLab identity verification before CI jobs can run
-- after that, at least one baseline pipeline must be executed successfully on each imported repository
 - `k3s` bootstrap still has to start from zero because there is no existing cluster on the public host
+- GitHub Actions still need their first real end-to-end run with image publish and `platform-infra` promotion
+- live GHCR pull secrets and repository permissions still need to be proven from the target runtime
 
 Current chosen root domains:
 
@@ -162,7 +164,7 @@ Current DNS status for `team1`:
 - current external DNS answers for `web/verify/registry/auth.diplomverify.ru` still point to placeholder `198.18.0.x` addresses, not to `213.165.211.103`
 - because of that, the validated live fallback remains the `sslip.io` host set until DNS is corrected
 
-Current Kubernetes and GitLab status from live checks on April 5, 2026:
+Current Kubernetes and CI/CD status from live checks on April 5, 2026:
 
 - `k3s` is not installed on the public server yet
 - `k3s.service` does not exist, so the target Kubernetes runtime is currently absent rather than merely degraded
@@ -173,7 +175,11 @@ Current Kubernetes and GitLab status from live checks on April 5, 2026:
   - `Identity verification is required in order to run CI jobs`
 - practical consequence:
   - GitLab repository hosting works
-  - GitLab CI/CD is not operational yet
+  - GitLab CI/CD is not operational and is no longer treated as the canonical execution layer
+- canonical CI/CD direction is now:
+  - `GitHub Actions` for validate/build/publish/promote
+  - `ghcr.io` for image distribution
+  - `platform-infra` on GitHub as deploy source of truth
 
 ## Production-ready assessment
 
@@ -195,7 +201,7 @@ This is close to `prod cutover ready`, but not yet there because the remaining b
 The platform is not yet `prod cutover ready` because the following are still open:
 
 - Terraform and Argo changes have not yet been proven against live Yandex Cloud resources
-- GitLab CI is not yet the live canonical execution layer with runners, mirrors, and protected deploy flow
+- GitHub Actions have not yet been proven end-to-end as the live canonical execution layer with image publish and promotion
 - bootstrap secrets for external-secrets and external-dns still need environment provisioning
 - live `dev` and `prod` tenant overlays must validate domain isolation, Keycloak isolation, and Caddy edge routing
 - `diplomverify.ru` must be repointed from placeholder IPs to the actual public server before domain cutover can be considered complete

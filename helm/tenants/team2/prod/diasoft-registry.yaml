@@ -1,5 +1,5 @@
 image:
-  repository: registry.gitlab.com/ozzus/diasoft-registry/registry-api
+  repository: ghcr.io/ozzus/diasoft-registry/registry-api
   tag: stable
 
 ingress:

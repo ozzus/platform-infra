@@ -6,7 +6,7 @@ serviceAccount:
 
 api:
   image:
-    repository: registry.example.com/diasoft-gateway/gateway-api
+    repository: ghcr.io/ozzus/diasoft-gateway/gateway-api
     tag: latest
   replicas: 2
   service:
@@ -38,7 +38,7 @@ api:
 
 consumer:
   image:
-    repository: registry.example.com/diasoft-gateway/gateway-consumer
+    repository: ghcr.io/ozzus/diasoft-gateway/gateway-consumer
     tag: latest
   replicas: 1
   service:
@@ -116,7 +116,7 @@ pdb:
 
 replayer:
   image:
-    repository: registry.example.com/diasoft-gateway/gateway-dlq-replayer
+    repository: ghcr.io/ozzus/diasoft-gateway/gateway-dlq-replayer
     tag: latest
   replicas: 0
   service:

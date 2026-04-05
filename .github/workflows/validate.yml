@@ -1,0 +1,221 @@
+name: Platform Infra Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env_name:
+          - nonprod
+          - prod
+    defaults:
+      run:
+        working-directory: terraform/yandex/envs/${{ matrix.env_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform init -backend=false
+      - run: terraform validate
+
+  terraform-plan:
+    runs-on: ubuntu-latest
+    needs: terraform-validate
+    if: secrets.YC_IAM_TOKEN != '' || secrets.YC_OAUTH_TOKEN != '' || secrets.YC_SERVICE_ACCOUNT_KEY_FILE != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        env_name:
+          - nonprod
+          - prod
+    defaults:
+      run:
+        working-directory: terraform/yandex/envs/${{ matrix.env_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - env:
+          YC_IAM_TOKEN: ${{ secrets.YC_IAM_TOKEN }}
+          YC_OAUTH_TOKEN: ${{ secrets.YC_OAUTH_TOKEN }}
+          YC_SERVICE_ACCOUNT_KEY_FILE_CONTENT: ${{ secrets.YC_SERVICE_ACCOUNT_KEY_FILE }}
+        run: |
+          if [ -n "${YC_SERVICE_ACCOUNT_KEY_FILE_CONTENT:-}" ]; then
+            key_file="$(mktemp)"
+            printf '%s' "$YC_SERVICE_ACCOUNT_KEY_FILE_CONTENT" >"$key_file"
+            export YC_SERVICE_ACCOUNT_KEY_FILE="$key_file"
+          fi
+          terraform init -backend=false
+          terraform plan -lock=false -input=false
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - run: helm lint helm/charts/diasoft-gateway -f helm/environments/dev/diasoft-gateway.yaml
+      - run: helm lint helm/charts/diasoft-gateway -f helm/environments/stage/diasoft-gateway.yaml
+      - run: helm lint helm/charts/diasoft-gateway -f helm/environments/prod/diasoft-gateway.yaml
+      - run: helm lint helm/charts/diasoft-registry -f helm/environments/dev/diasoft-registry.yaml
+      - run: helm lint helm/charts/diasoft-registry -f helm/environments/stage/diasoft-registry.yaml
+      - run: helm lint helm/charts/diasoft-registry -f helm/environments/prod/diasoft-registry.yaml
+      - run: helm lint helm/charts/diasoft-web -f helm/environments/dev/diasoft-web.yaml
+      - run: helm lint helm/charts/diasoft-web -f helm/environments/stage/diasoft-web.yaml
+      - run: helm lint helm/charts/diasoft-web -f helm/environments/prod/diasoft-web.yaml
+      - run: helm lint helm/charts/keycloak -f helm/environments/dev/keycloak.yaml
+      - run: helm lint helm/charts/keycloak -f helm/environments/stage/keycloak.yaml
+      - run: helm lint helm/charts/keycloak -f helm/environments/prod/keycloak.yaml
+      - run: |
+          find helm/tenants -mindepth 3 -maxdepth 3 -type f -name '*.yaml' | sort | while read -r values_file; do
+            chart_name=$(basename "$values_file" .yaml)
+            helm lint "helm/charts/$chart_name" -f "$values_file"
+          done
+
+  helm-template:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - run: helm template diasoft-gateway helm/charts/diasoft-gateway -f helm/environments/dev/diasoft-gateway.yaml >/tmp/gateway-dev.yaml
+      - run: helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/dev/diasoft-registry.yaml >/tmp/registry-dev.yaml
+      - run: helm template diasoft-web helm/charts/diasoft-web -f helm/environments/dev/diasoft-web.yaml >/tmp/web-dev.yaml
+      - run: helm template keycloak helm/charts/keycloak -f helm/environments/dev/keycloak.yaml >/tmp/keycloak-dev.yaml
+      - run: helm template diasoft-gateway helm/charts/diasoft-gateway -f helm/environments/stage/diasoft-gateway.yaml >/tmp/gateway-stage.yaml
+      - run: helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/stage/diasoft-registry.yaml >/tmp/registry-stage.yaml
+      - run: helm template diasoft-web helm/charts/diasoft-web -f helm/environments/stage/diasoft-web.yaml >/tmp/web-stage.yaml
+      - run: helm template keycloak helm/charts/keycloak -f helm/environments/stage/keycloak.yaml >/tmp/keycloak-stage.yaml
+      - run: helm template diasoft-gateway helm/charts/diasoft-gateway -f helm/environments/prod/diasoft-gateway.yaml >/tmp/gateway-prod.yaml
+      - run: helm template diasoft-registry helm/charts/diasoft-registry -f helm/environments/prod/diasoft-registry.yaml >/tmp/registry-prod.yaml
+      - run: helm template diasoft-web helm/charts/diasoft-web -f helm/environments/prod/diasoft-web.yaml >/tmp/web-prod.yaml
+      - run: helm template keycloak helm/charts/keycloak -f helm/environments/prod/keycloak.yaml >/tmp/keycloak-prod.yaml
+      - run: |
+          find helm/tenants -mindepth 3 -maxdepth 3 -type f -name '*.yaml' | sort | while read -r values_file; do
+            chart_name=$(basename "$values_file" .yaml)
+            tenant_name=$(printf '%s' "$values_file" | tr '/.' '-')
+            helm template "$tenant_name" "helm/charts/$chart_name" -f "$values_file" >/dev/null
+          done
+
+  kubeconform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - run: |
+          KUBECONFORM_VERSION=0.6.7
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" -o /tmp/kubeconform.tgz
+          tar -xzf /tmp/kubeconform.tgz -C /tmp
+          sudo install /tmp/kubeconform /usr/local/bin/kubeconform
+      - run: |
+          validate_rendered() {
+            chart_name=$1
+            values_file=$2
+            helm template test "helm/charts/$chart_name" -f "$values_file" | kubeconform -strict -summary -ignore-missing-schemas
+          }
+          validate_rendered diasoft-gateway helm/environments/dev/diasoft-gateway.yaml
+          validate_rendered diasoft-registry helm/environments/dev/diasoft-registry.yaml
+          validate_rendered diasoft-web helm/environments/dev/diasoft-web.yaml
+          validate_rendered keycloak helm/environments/dev/keycloak.yaml
+          find helm/tenants -mindepth 3 -maxdepth 3 -type f -name '*.yaml' | sort | while read -r values_file; do
+            chart_name=$(basename "$values_file" .yaml)
+            validate_rendered "$chart_name" "$values_file"
+          done
+
+  argocd-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo curl -fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+      - run: sudo chmod +x /usr/local/bin/yq
+      - run: for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.kind' "$file")" = "Application" ] || exit 1; done
+      - run: for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.spec.destination.namespace' "$file")" != "null" ] || exit 1; done
+      - run: for file in $(find argocd/apps -name '*.yaml' | sort); do [ "$(yq '.spec.source.path // .spec.source.chart // .spec.sources[0].path // .spec.sources[0].chart' "$file")" != "null" ] || exit 1; done
+      - run: |
+          for file in $(find argocd/apps -name '*.yaml' | sort); do
+            yq -r '.spec.sources[]?.helm.valueFiles[]? // ""' "$file" | while read -r value_file; do
+              [ -z "$value_file" ] && continue
+              path=${value_file#\$values/}
+              [ -f "$path" ] || exit 1
+            done
+          done
+      - run: for file in $(find argocd/projects -name '*.yaml' | sort); do [ "$(yq '.kind' "$file")" = "AppProject" ] || exit 1; done
+      - run: for file in $(find argocd/projects -name '*.yaml' | sort); do [ "$(yq '.spec.sourceRepos[0]' "$file")" != "null" ] || exit 1; done
+      - run: for file in $(find argocd/manifests -name '*.yaml' | sort); do [ "$(yq '.apiVersion' "$file")" != "null" ] || exit 1; done
+
+  values-policy-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo curl -fsSL -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+      - run: sudo chmod +x /usr/local/bin/yq
+      - run: "! grep -R -n -E 'SPRING_DATASOURCE_PASSWORD:|OBJECT_STORAGE_SECRET_KEY:|KC_DB_PASSWORD:|password: admin' helm/environments/stage helm/environments/prod"
+      - run: "! grep -R -n -E 'ChangeMe123!' helm/environments/prod"
+      - run: "! grep -R -n -E 'bootstrapUsers:' helm/environments/prod"
+      - run: "! grep -R -n -E 'mode: dev' helm/environments/stage helm/environments/prod"
+      - run: "! grep -R -n -E 'existingSecret: \"\"' helm/environments/stage helm/environments/prod helm/addons/prod"
+      - run: |
+          team1_prod_root=$(yq -r '.ingress.host' helm/tenants/team1/prod/diasoft-web.yaml | sed 's/^web\.//')
+          team2_prod_root=$(yq -r '.ingress.host' helm/tenants/team2/prod/diasoft-web.yaml | sed 's/^web\.//')
+          [ "$team1_prod_root" != "$team2_prod_root" ]
+      - run: |
+          team1_dev_root=$(yq -r '.ingress.host' helm/tenants/team1/dev/diasoft-web.yaml | sed 's/^web\.dev\.//')
+          team2_dev_root=$(yq -r '.ingress.host' helm/tenants/team2/dev/diasoft-web.yaml | sed 's/^web\.dev\.//')
+          [ "$team1_dev_root" != "$team2_dev_root" ]
+      - run: "! grep -R -n -E 'localhost|127\\.0\\.0\\.1|sslip\\.io' helm/tenants/team1/prod helm/tenants/team2/prod"
+      - run: "! grep -R -n -E 'bootstrapUsers:' helm/tenants/team1/prod/keycloak.yaml helm/tenants/team2/prod/keycloak.yaml"
+      - run: |
+          [ "$(yq -r '.mode' helm/tenants/team1/prod/keycloak.yaml)" = "prod" ]
+          [ "$(yq -r '.mode' helm/tenants/team2/prod/keycloak.yaml)" = "prod" ]
+
+  bootstrap-docs-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -f docs/bootstrap-secrets.md
+      - run: test -f docs/cutover-checklist.md
+      - run: test -f docs/runbooks/rollback.md
+      - run: test -f docs/runbooks/database-restore.md
+      - run: test -f docs/runbooks/keycloak-outage.md
+      - run: test -f docs/runbooks/kafka-lag.md
+      - run: test -f docs/runbooks/import-backlog.md
+      - run: test -f docs/runbooks/dlq-replay.md
+      - run: test -f docs/runbooks/alert-delivery-smoke.md
+      - run: test -f docs/runbooks/stage-rehearsal.md
+      - run: test -f docs/one-server-multi-team-deploy.md
+
+  bootstrap-scripts-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh -n scripts/bootstrap-host.sh
+      - run: sh -n scripts/bootstrap-k3s.sh
+      - run: sh -n scripts/render-caddyfile.sh
+      - run: sh -n scripts/render-tenant-secrets.sh
+      - run: test -f deploy/one-server/Caddyfile.tmpl
+      - run: test -f deploy/one-server/domains.env.example
+
+  caddy-config-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p /tmp/rendered
+      - run: sh scripts/render-caddyfile.sh deploy/one-server/domains.env.example >/tmp/rendered/Caddyfile
+      - run: docker run --rm -v /tmp/rendered:/etc/caddy caddy:2.9.1-alpine caddy validate --config /etc/caddy/Caddyfile

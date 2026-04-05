@@ -5,7 +5,7 @@ serviceAccount:
   automountServiceAccountToken: false
 
 image:
-  repository: registry.example.com/diasoft-registry/registry-api
+  repository: ghcr.io/ozzus/diasoft-registry/registry-api
   tag: latest
 
 service:

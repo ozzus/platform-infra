@@ -32,7 +32,7 @@
 В практическом плане это означает:
 
 - текущий compose-based rollout команды 1 является промежуточным
-- следующий реальный демонстрационный шаг это `k3s` single-node runtime с GitLab CI/CD и ArgoCD
+- следующий реальный демонстрационный шаг это `k3s` single-node runtime с GitHub Actions, GHCR и ArgoCD
 - на защите можно честно говорить, что кодовый и инфраструктурный контур уже подготовлены, а remaining gap теперь в live bootstrap и rehearsal
 
 Текущий live fallback команды 1:
@@ -56,7 +56,7 @@
 - external DNS for `diplomverify.ru` still resolves to non-server placeholder IPs instead of `213.165.211.103`
 - until DNS is corrected, the only externally validated URLs remain the `sslip.io` fallback hosts
 - live check on April 5, 2026 showed that `k3s` is not installed on the public server at all
-- live check on April 5, 2026 also showed that GitLab repositories are imported, but CI jobs are blocked by GitLab identity verification and no pipeline has run yet
+- live check on April 5, 2026 also showed that GitLab CI is blocked by identity verification, so the canonical CI path was moved to GitHub Actions and GHCR
 
 ## Что означает кейс со стороны заказчика
 
@@ -331,7 +331,8 @@
 
 Нужно отдельно озвучивать, что мы ушли от простого `docker compose`-подхода как от временного demo слоя и проектируем целевой runtime так:
 
-- `GitLab CI` как source of truth для CI/CD
+- `GitHub Actions` как source of truth для CI/CD
+- `GHCR` как registry для сервисных образов
 - `platform-infra` как единый deploy source of truth
 - `k3s` single-node как pragmatic production-shaped runtime для хакатонного сервера
 - глобальный `Caddy` как внешний edge
